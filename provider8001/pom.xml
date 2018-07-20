@@ -68,6 +68,19 @@
         </dependency>
         <!-- MyBatis + Druid + MySQL -->
 
+        <!-- eureka 客户端依赖 -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-config</artifactId>
+            <version>${springcloud.config.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+            <version>${springcloud.eureka.version}</version>
+        </dependency>
+        <!-- eureka 客户端依赖 -->
+
     </dependencies>
 
     <build>

@@ -18,3 +18,13 @@ logging:
 
 mybatis:
   type-aliases-package: me.junbin.microservice.domain
+
+eureka:
+  client:
+    # 是否需要向 eureka 服务端注册自身信息（以成为 eureka 客户端）
+    register-with-eureka: true
+    # 是否需要向 eureka 服务端获取抓取 eureka 客户端信息
+    fetch-registry: true
+    service-url:
+      # eureka 服务端交互地址
+      defaultZone: http://localhost:7001/eureka/
