@@ -1,0 +1,20 @@
+logback:
+  context:
+    name: logback     # 设置 logback 的 contextName
+  log:
+    charset: UTF-8    # 日志文件编码
+    path: ./logs      # 用来存储所有日志的目录
+
+server:
+  port: 8081
+spring:
+  application:
+    name: MicroService-Provider8081
+  output:
+    ansi:
+      enabled: always
+logging:
+  config: classpath:config/logback-spring.xml # 指定日志实现框架的配置文件路径，可以使用 classpath: 前缀，默认为空串 LoggingApplicationListener#initializeSystem:262
+
+mybatis:
+  type-aliases-package: me.junbin.microservice.domain

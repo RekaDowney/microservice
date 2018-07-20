@@ -1,0 +1,16 @@
+server:
+  port: 80
+
+logback:
+  context:
+    name: logback     # 设置 logback 的 contextName
+  log:
+    charset: UTF-8    # 日志文件编码
+    path: ./logs      # 用来存储所有日志的目录
+
+microservice:
+  provider:
+    baseHost: http://localhost:8081
+
+logging:
+  config: classpath:config/logback-spring.xml # 指定日志实现框架的配置文件路径，可以使用 classpath: 前缀，默认为空串 LoggingApplicationListener#initializeSystem:262
