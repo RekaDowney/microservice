@@ -2,6 +2,7 @@ package me.junbin.microservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
 
 /**
@@ -13,6 +14,7 @@ import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
 // 将服务作为 Eureka 客户端，借此向 Eureka 服务端注册自身
 @EnableEurekaClient
 @SpringBootApplication
+@EnableDiscoveryClient // 开启服务发现功能
 public class Provider8001Application {
 
     public static void main(String[] args) throws Exception {

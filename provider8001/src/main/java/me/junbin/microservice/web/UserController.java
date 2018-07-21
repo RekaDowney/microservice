@@ -6,9 +6,14 @@ import me.junbin.microservice.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author : Zhong Junbin
@@ -22,6 +27,8 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+    @Autowired
+    private DiscoveryClient client;
     private static final Logger LOGGER = LoggerFactory.getLogger(UserController.class);
 
     @PostMapping
@@ -49,6 +56,32 @@ public class UserController {
     public List<User> list() {
         LOGGER.info("请求查询所有用户");
         return userService.findAll();
+    }
+
+    // 必须先启动 EurekaServer，服务发现功能才能正常使用
+    @GetMapping("/service/discovery")
+    public Object serviceDiscovery() {
+        Map<String, Object> result = new HashMap<>();
+        String description = client.description();
+        System.out.println(client.getInstances("MicroService-Provider8081")); // EurekaDiscoveryClient$EurekaServiceInstance
+        System.out.println(client.getServices()); // [microservice-provider8081]
+        result.put("description", description);
+        for (String service : client.getServices()) {
+            List<Object> serviceInfo = new ArrayList<>();
+            for (ServiceInstance instance : client.getInstances(service)) {
+                Map<String, Object> instanceInfo = new HashMap<>();
+                instanceInfo.put("serviceId", instance.getServiceId());
+                instanceInfo.put("scheme", instance.getScheme());
+                instanceInfo.put("host", instance.getHost());
+                instanceInfo.put("port", instance.getPort());
+                instanceInfo.put("Uri: ", instance.getUri());
+                instanceInfo.put("secure: ", instance.isSecure());
+                serviceInfo.add(instanceInfo);
+                System.out.println("MetaData: " + instance.getMetadata());
+            }
+            result.put(service, serviceInfo);
+        }
+        return result;
     }
 
 }

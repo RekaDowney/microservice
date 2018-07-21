@@ -150,7 +150,7 @@
 
 　　直接运行 main 方法，然后访问 http://localhost:${server.port}，看到[Eureka服务端页面][EurekaServerPage]即表示 Eureka 配置正确。
 
-### Eureka 客户端
+### Eureka 客户端（服务注册）
 
 　　当我们有了 Eureka 服务端之后，就可以将之前编写的服务提供方作为服务注册到 Eureka 服务端。
 
@@ -344,7 +344,106 @@
 
 　　如果关闭了 Eureka Server 的自我保护模式，那么 Eureka 会在页面上给出相应的警示语：_THE SELF PRESERVATION MODE IS TURNED OFF.THIS MAY NOT PROTECT INSTANCE EXPIRY IN CASE OF NETWORK/OTHER PROBLEMS._
 
+### 再说 Eureka 自我保护模式
 
+默认情况下，如果EurekaServer在一定时间内没有接收到某个微服务实例的心跳，EurekaServer将会注销该实例（默认90秒）。
+但是当网络分区故障发生时，微服务与EurekaServer之间无法正常通信，以上行为可能变得非常危险了一一因为微服务本身其实
+是健康的，此时本不应该注销这个微服务。Eureka通过自我保护模式来解决这个问题一一当EurekaServer节点在短时间内丟
+失过多客户端时（可能发生了网络分区故障），那么这个节点就会进入自我保护模式。一旦进入该模式，EurekaServer就会保护服
+务注册表中的信息，不再删除服务注册表中的数据（也就是不会注销任何微服务）。当网络故障恢复后，该EurekaServer节点会
+自动退出自我保护模式。
+在自我保护模式中，Eureka Server会保护服务注册表中的信息，不再注销任何服务实例。当它收到的心跳数重新恢复到阈值以上
+时，该Eureka Server节点就会自动退出自我保护模式。它的设计哲学就是宁可保留错误的服务注册信息，也不盲目注销任何可能
+健康的服务实例。一句话讲解：好死不如赖活着
+综上，自我保护模式是一种应对网络异常的安全保护措施。它的架构哲学是宁可同时保留所有微服务（健康的微服务和不健康的微
+服务都会保留），也不盲目注销任何健康的微服务。使用自我保护模式，可以让Eureka集群更加的健壮、稳定。
+在Spring Cloud中，可以使用eureka.server.enable-self-preservation = false 禁用自我保护模式。
+
+### Eureka 服务发现
+
+　　一：在 SpringBootApplication 上添加 @org.springframework.cloud.client.discovery.EnableDiscoveryClient 注解开启服务发现功能
+
+　　二：在需要使用服务发现的类中注入 org.springframework.cloud.client.discovery.DiscoveryClient ，该服务发现客户端有以下两个常用方法：
+
+```java
+
+    public interface DiscoveryClient {
+    
+        /**
+         * A human readable description of the implementation, used in HealthIndicator
+         * @return the description
+         */
+        String description();
+    
+        /**
+         * 获取指定服务ID的所有服务实例对象
+         * Get all ServiceInstances associated with a particular serviceId
+         * @param serviceId the serviceId to query
+         * @return a List of ServiceInstance
+         */
+        List<ServiceInstance> getInstances(String serviceId);
+    
+        /**
+         * 获取所有当前已知的服务ID
+         * @return all known service ids
+         */
+        List<String> getServices();
+    
+    }
+```
+
+　　三：获取对应服务实例后，可以通过该实例获取服务的访问地址
+
+```java
+
+    public interface ServiceInstance {
+    
+        /**
+         * 获取服务 ID
+         * @return the service id as registered.
+         */
+        String getServiceId();
+    
+        /**
+         * 获取服务 hostname
+         * @return the hostname of the registered ServiceInstance
+         */
+        String getHost();
+    
+        /**
+         * 获取服务端口
+         * @return the port of the registered ServiceInstance
+         */
+        int getPort();
+    
+        /**
+         * 服务是否需要通过 https 访问
+         * @return if the port of the registered ServiceInstance is https or not
+         */
+        boolean isSecure();
+    
+        /**
+         * 服务的 URI 地址
+         * @return the service uri address
+         */
+        URI getUri();
+    
+        /**
+         * 服务的元数据
+         * @return the key value pair metadata associated with the service instance
+         */
+        Map<String, String> getMetadata();
+    
+        /**
+         * 服务的协议
+         * @return the scheme of the instance
+         */
+        default String getScheme() {
+            return null;
+        }
+    }
+
+```
 
 ## 超链管理区
 
