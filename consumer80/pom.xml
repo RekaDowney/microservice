@@ -48,8 +48,9 @@
 
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpcomponents-client</artifactId>
+            <artifactId>httpclient</artifactId>
         </dependency>
+
     </dependencies>
 
     <build>

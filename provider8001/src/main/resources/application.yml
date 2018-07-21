@@ -28,3 +28,21 @@ eureka:
     service-url:
       # eureka 服务端交互地址
       defaultZone: http://localhost:7001/eureka/
+  instance:
+    # 修改当前 Eureka 服务的实例名称。配置该属性后，实例名称就不再采用 hostname:${spring.application.name}:${server.port} 配置值
+    instance-id: provider8001
+    # 访问服务信息时，采用 IP 而不是 hostname 的形式（比如：默认访问当前服务信息路径为：/info，此时完整地址可能是 localhost:8001/info，配置为 true 之后，访问地址变成了 127.0.0.1:8081/info ）
+    prefer-ip-address: true
+#  instance:
+#    # 心跳检测时间间隔（续约更新时间间隔），默认为 30（秒）
+#    lease-renewal-interval-in-seconds: 30
+#    # Eureka Server 在收到心跳检测后，等待多久没有收到下个心跳检测包则移除当前服务，默认为 90（秒），
+#    lease-expiration-duration-in-seconds: 90
+
+# 配置 Eureka 服务信息，此时访问 ${hostname}:${server.port}/actuator/info 即可看到如下 json
+# {"app":{"name":"microservice"},"company":{"name":"joyley"},"build":{"version":1.0,"artifactId":"provider8001"}}
+info:
+  app.name: microservice
+  company.name: joyley
+  build.version: @project.version@
+  build.artifactId: @project.artifactId@

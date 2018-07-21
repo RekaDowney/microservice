@@ -78,14 +78,23 @@
 
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
-                <artifactId>httpcomponents-client</artifactId>
-                <version>4.5.5</version>
+                <artifactId>httpclient</artifactId>
+                <version>4.5.6</version>
             </dependency>
 
         </dependencies>
     </dependencyManagement>
 
     <build>
+        <!--
+                <resources>
+                    <resource>
+                        <directory>src/main/resources</directory>
+                        <filtering>true</filtering>
+                    </resource>
+                </resources>
+        -->
+
         <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
             <plugins>
                 <plugin>
@@ -130,6 +139,23 @@
                     <skipTests>true</skipTests>
                 </configuration>
             </plugin>
+
+            <!-- 允许 src/main/resources 目录下的文件通过 $variable$ 的方式读取 pom 文件的配置 -->
+            <!-- 想要修改成以 $ 作为变量读取分隔符，发现无论如何都不生效，因此只能采用默认的分隔符 @ -->
+            <!--M:/Software/Env/Apache/Maven/repository/org/springframework/boot/spring-boot-starter-parent/2.0.3.RELEASE/spring-boot-starter-parent-2.0.3.RELEASE.pom:119-->
+            <!--
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-resources-plugin</artifactId>
+                            <configuration>
+                                <delimiters>
+                                    <delimit>$</delimit>
+                                </delimiters>
+                                <useDefaultDelimiters>false</useDefaultDelimiters>
+                            </configuration>
+                        </plugin>
+            -->
+
         </plugins>
     </build>
 

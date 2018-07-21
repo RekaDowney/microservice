@@ -13,3 +13,10 @@ eureka:
     # key 为 defaultZone，value 为 交互地址
     service-url:
       defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+  server:
+    # 关闭 Eureka Server 的自我保护模式（默认为 开启 状态），开启后 Eureka 将会尝试保护其服务注册表中的服务信息，不再删除服务注册表中的数据（即使某个已注册的服务已down掉也不会注销该服务）
+    # 生产环境通常不建议关闭 自我保护模式
+    enable-self-preservation: false
+    # 清除不可用服务时间间隔，默认为 60 * 1000 毫秒（即 1 分钟），可以调整该时间以让 Eureka 迅速有效地剔除不可用的服务
+    eviction-interval-timer-in-ms: 60000
+#    renewal-threshold-update-interval-ms:

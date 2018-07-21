@@ -81,6 +81,13 @@
         </dependency>
         <!-- eureka 客户端依赖 -->
 
+        <!-- eureka 服务信息配置依赖 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <!-- eureka 服务信息配置依赖 -->
+
     </dependencies>
 
     <build>
