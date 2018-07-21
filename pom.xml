@@ -11,6 +11,8 @@
         <module>provider8001</module>
         <module>consumer80</module>
         <module>eureka-server7001</module>
+        <module>eureka-server7002</module>
+        <module>eureka-server7003</module>
     </modules>
 
     <parent>

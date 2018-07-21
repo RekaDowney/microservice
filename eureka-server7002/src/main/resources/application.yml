@@ -1,17 +1,17 @@
 server:
-  port: 7001
+  port: 7002
 
 eureka:
   instance:
     # EurekaServer 实例名称
     # 集群环境下，通过 hosts 文件模拟不同的 hostname
-    hostname: eureka7001
+    hostname: eureka7002
   client:
     # 是否需要向 eureka 服务端注册自身信息（以成为 eureka 客户端）。这里设置为 false，因为这里是 eureka 的服务端
     register-with-eureka: false
     # 是否需要向 eureka 服务端获取抓取 eureka 客户端信息。这里设置为 false
     fetch-registry: false
-    # eureka 服务端交互地址
-    # 集群环境下，交互地址为其他 EurekaServer 交互地址，多个交互地址采用逗号分隔
+    # eureka 服务端交互地址（eureka 客户端服务注册方调用这个地址进行注册，同时其他服务可以通过这个地址查询服务提供方信息），默认为 http://localhost:8761/eureka/
+    # key 为 defaultZone，value 为 交互地址
     service-url:
-      defaultZone: http://eureka7002:7002/eureka/,http://eureka7003:7003/eureka/
+      defaultZone: http://eureka7001:7001/eureka/,http://eureka7003:7003/eureka/

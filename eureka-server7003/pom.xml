@@ -9,9 +9,9 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>eureka-server7001</artifactId>
+    <artifactId>eureka-server7003</artifactId>
 
-    <name>microservice enreka-server7001 微服务 Eureka服务端</name>
+    <name>microservice enreka-server7003 微服务 Eureka服务端</name>
     <description>SpringCloud MicroService</description>
 
     <properties>
@@ -60,5 +60,4 @@
             </plugins>
         </pluginManagement>
     </build>
-
 </project>
