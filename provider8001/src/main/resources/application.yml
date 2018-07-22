@@ -27,7 +27,7 @@ eureka:
     fetch-registry: true
     service-url:
       # eureka 服务端交互地址
-      defaultZone: http://localhost:7001/eureka/
+      defaultZone: http://eureka7001:7001/eureka/,http://eureka7002:7002/eureka/,http://eureka7003:7003/eureka/
   instance:
     # 修改当前 Eureka 服务的实例名称。配置该属性后，实例名称就不再采用 hostname:${spring.application.name}:${server.port} 配置值
     instance-id: provider8001
