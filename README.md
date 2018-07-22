@@ -83,7 +83,7 @@
 
 　　最原始的服务消费方可以通过 RESTful 风格与单一服务提供方做交互。这时候主要是用于验证服务提供方所提供的服务正确性与可用性。
 
-## 单个 Eureka 服务发现模块（commit id --> 6b3379c）
+## 单个 Eureka 服务发现模块（eureka 分支 commit id --> e87ce73）
 
 ### Eureka 服务端
 
@@ -444,6 +444,140 @@
     }
 
 ```
+
+## EurekaServer 集群（eureka-cluster 分支 commit id --> 416615c）
+
+　　一：编辑 hosts 文件，添加如下映射
+
+```text
+
+    # Eureka 集群测试
+    127.0.0.1 eureka7001
+    127.0.0.1 eureka7002
+    127.0.0.1 eureka7003
+
+```
+
+　　二：修改 eureka-server7001 模块
+
+```yaml
+
+    eureka:
+      instance:
+        # EurekaServer 实例名称
+        # 集群环境下，通过 hosts 文件模拟不同的 hostname
+        hostname: eureka7001
+      client:
+        # 是否需要向 eureka 服务端注册自身信息（以成为 eureka 客户端）。这里设置为 false，因为这里是 eureka 的服务端
+        register-with-eureka: false
+        # 是否需要向 eureka 服务端获取抓取 eureka 客户端信息。这里设置为 false
+        fetch-registry: false
+        # eureka 服务端交互地址
+        # 集群环境下，交互地址为其他 EurekaServer 交互地址，多个交互地址采用逗号分隔
+        service-url:
+          defaultZone: http://eureka7002:7002/eureka/,http://eureka7003:7003/eureka/
+
+```
+
+　　三：添加 eureka-server7002 和 eureka-server7003 模块
+
+　　对于 eureka-server7002 模块有如下配置：
+
+```yaml
+
+    server:
+      port: 7002
+    
+    eureka:
+      instance:
+        # EurekaServer 实例名称
+        # 集群环境下，通过 hosts 文件模拟不同的 hostname
+        hostname: eureka7002
+      client:
+        # 是否需要向 eureka 服务端注册自身信息（以成为 eureka 客户端）。这里设置为 false，因为这里是 eureka 的服务端
+        register-with-eureka: false
+        # 是否需要向 eureka 服务端获取抓取 eureka 客户端信息。这里设置为 false
+        fetch-registry: false
+        # eureka 服务端交互地址（eureka 客户端服务注册方调用这个地址进行注册，同时其他服务可以通过这个地址查询服务提供方信息），默认为 http://localhost:8761/eureka/
+        # key 为 defaultZone，value 为 交互地址
+        service-url:
+          defaultZone: http://eureka7001:7001/eureka/,http://eureka7003:7003/eureka/
+
+```
+
+　　其启动类如下：
+
+```java
+
+    @EnableEurekaServer
+    @SpringBootApplication
+    public class Eureka7002Application {
+    
+        public static void main(String[] args) throws Exception {
+            SpringApplication.run(Eureka7002Application.class, args);
+        }
+    
+    }
+
+```
+
+　　对于 eureka-server7003 模块有如下配置：
+
+```yaml
+
+    server:
+      port: 7003
+    
+    eureka:
+      instance:
+        # EurekaServer 实例名称
+        # 集群环境下，通过 hosts 文件模拟不同的 hostname
+        hostname: eureka7003
+      client:
+        # 是否需要向 eureka 服务端注册自身信息（以成为 eureka 客户端）。这里设置为 false，因为这里是 eureka 的服务端
+        register-with-eureka: false
+        # 是否需要向 eureka 服务端获取抓取 eureka 客户端信息。这里设置为 false
+        fetch-registry: false
+        # eureka 服务端交互地址（eureka 客户端服务注册方调用这个地址进行注册，同时其他服务可以通过这个地址查询服务提供方信息），默认为 http://localhost:8761/eureka/
+        # key 为 defaultZone，value 为 交互地址
+        service-url:
+          defaultZone: http://eureka7001:7001/eureka/,http://eureka7002:7002/eureka/
+
+```
+
+　　其启动类如下：
+
+```java
+
+    @EnableEurekaServer
+    @SpringBootApplication
+    public class Eureka7003Application {
+    
+        public static void main(String[] args) throws Exception {
+            SpringApplication.run(Eureka7003Application.class, args);
+        }
+    
+    }
+
+```
+
+　　四：修改 provider8001 的 eureka 交互地址
+
+```yaml
+
+    eureka:
+      client:
+        # 是否需要向 eureka 服务端注册自身信息（以成为 eureka 客户端）
+        register-with-eureka: true
+        # 是否需要向 eureka 服务端获取抓取 eureka 客户端信息
+        fetch-registry: true
+        service-url:
+          # eureka 服务端交互地址
+          defaultZone: http://eureka7001:7001/eureka/,http://eureka7002:7002/eureka/,http://eureka7003:7003/eureka/
+
+```
+
+　　此时集群即搭建成功，通过启动 Eureka7001Application 、 Eureka7002Application 、 Eureka7003Application 先启动 Eureka 集群，然后启动 Provider8001Application 向 Eureka 集群注册服务。最后通过访问 eureka7001:7001 、 eureka7002:7002 、 eureka7003:7003 验证集群和服务注册效果。
 
 ## 超链管理区
 
