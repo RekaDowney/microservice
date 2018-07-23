@@ -9,7 +9,7 @@ server:
   port: 8001
 spring:
   application:
-    name: MicroService-Provider8081
+    name: MicroService-Provider8001
   output:
     ansi:
       enabled: always

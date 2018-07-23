@@ -63,7 +63,7 @@ public class UserController {
     public Object serviceDiscovery() {
         Map<String, Object> result = new HashMap<>();
         String description = client.description();
-        System.out.println(client.getInstances("MicroService-Provider8081")); // EurekaDiscoveryClient$EurekaServiceInstance
+        System.out.println(client.getInstances("MicroService-Provider8001")); // EurekaDiscoveryClient$EurekaServiceInstance
         System.out.println(client.getServices()); // [microservice-provider8081]
         result.put("description", description);
         for (String service : client.getServices()) {
