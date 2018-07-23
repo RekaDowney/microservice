@@ -159,11 +159,14 @@
                         </plugin>
             -->
 
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>2.0.3.RELEASE</version>
-            </plugin>
+            <!--
+                        &lt;!&ndash; 父模块中不能添加该插件，否则子模块自动继承，导致 api 模块无法 install（api 模块不需要 main 方法） &ndash;&gt;
+                        <plugin>
+                            <groupId>org.springframework.boot</groupId>
+                            <artifactId>spring-boot-maven-plugin</artifactId>
+                            <version>2.0.3.RELEASE</version>
+                        </plugin>
+            -->
 
         </plugins>
     </build>
