@@ -6,6 +6,7 @@ import me.junbin.microservice.domain.User;
 import me.junbin.microservice.repo.UserRepo;
 import org.apache.ibatis.session.Configuration;
 import org.mybatis.spring.SqlSessionFactoryBean;
+import org.mybatis.spring.boot.autoconfigure.SpringBootVFS;
 import org.mybatis.spring.mapper.MapperScannerConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -44,6 +45,9 @@ public class MyBatisConfiguration {
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         factoryBean.setMapperLocations(resolver.getResources("classpath:mapper/**/*.xml"));
         factoryBean.setConfiguration(configuration);
+        // 避免打包成 SpringBoot ExecutableJar 之后运行时抛出
+        // org.apache.ibatis.builder.BuilderException: Error resolving class. Cause: org.apache.ibatis.type.TypeException: Could not resolve type alias 'user'.  Cause: java.lang.ClassNotFoundException: Cannot find class: user
+        factoryBean.setVfs(SpringBootVFS.class);
         return factoryBean;
     }
 

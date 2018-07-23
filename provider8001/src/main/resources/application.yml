@@ -18,6 +18,11 @@ logging:
 
 mybatis:
   type-aliases-package: me.junbin.microservice.domain
+#  type-handlers-package: me.junbin.commons.converter.mybatis
+#  mapper-locations: classpath:mapper/**/*.xml
+#  configuration:
+#    map-underscore-to-camel-case: true
+#    default-statement-timeout: 3000
 
 eureka:
   client:

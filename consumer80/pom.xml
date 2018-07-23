@@ -51,6 +51,27 @@
             <artifactId>httpclient</artifactId>
         </dependency>
 
+        <!-- eureka 客户端依赖（这里使用 Eureka 的服务发现功能） -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-config</artifactId>
+            <version>${springcloud.config.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+            <version>${springcloud.eureka.version}</version>
+        </dependency>
+        <!-- eureka 客户端依赖（这里使用 Eureka 的服务发现功能） -->
+
+        <!-- Ribbon 消费端（客户端）负载均衡 -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-netflix-ribbon</artifactId>
+            <version>${springcloud.ribbon.version}</version>
+        </dependency>
+        <!-- Ribbon 消费端（客户端）负载均衡 -->
+
     </dependencies>
 
     <build>
