@@ -15,3 +15,5 @@ eureka:
     # key 为 defaultZone，value 为 交互地址
     service-url:
       defaultZone: http://eureka7001:7001/eureka/,http://eureka7002:7002/eureka/
+  server:
+      enable-self-preservation: false

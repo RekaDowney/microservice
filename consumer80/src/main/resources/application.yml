@@ -10,7 +10,7 @@ logback:
 
 microservice:
   provider:
-    baseHost: http://localhost:8081
+    baseHost: http://jd.me:8001
 
 logging:
   config: classpath:config/logback-spring.xml # 指定日志实现框架的配置文件路径，可以使用 classpath: 前缀，默认为空串 LoggingApplicationListener#initializeSystem:262
