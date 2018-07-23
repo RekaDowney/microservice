@@ -5,7 +5,6 @@ import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
 
 import java.sql.SQLException;
@@ -18,7 +17,7 @@ import java.util.Properties;
  * @description :
  */
 @Configuration
-@PropertySource(encoding = "UTF-8", value = "classpath:bundle/db.properties")
+//@PropertySource(encoding = "UTF-8", value = "classpath:bundle/db.properties")
 public class DataSourceConfiguration implements EnvironmentAware {
 
     private Environment environment;

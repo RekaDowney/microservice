@@ -6,7 +6,7 @@ logback:
     path: ./logs      # 用来存储所有日志的目录
 
 server:
-  port: 8081
+  port: 8001
 spring:
   application:
     name: MicroService-Provider8081
