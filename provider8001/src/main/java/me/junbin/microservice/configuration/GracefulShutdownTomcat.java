@@ -34,9 +34,11 @@ public class GracefulShutdownTomcat implements TomcatConnectorCustomizer, Applic
 
     @Override
     public void onApplicationEvent(ContextClosedEvent event) {
+        LOGGER.info("停止 Tomcat Connector...");
         this.connector.pause();
         Executor executor = this.connector.getProtocolHandler().getExecutor();
         if (executor instanceof ThreadPoolExecutor) {
+            LOGGER.info("关闭线程池（不再接收新的任务）并等待{}秒以便线程池完成现有任务...", this.waitForShutdownSeconds);
             ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) executor;
             threadPoolExecutor.shutdown();
             try {
