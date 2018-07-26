@@ -1,6 +1,7 @@
 package me.junbin.microservice.configuration;
 
 import me.junbin.microservice.interceptor.LoggingRequestInterceptor;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
@@ -25,6 +26,7 @@ public class ConsumerAppConfiguration {
     }
 
     @Bean
+    @LoadBalanced
     public RestTemplate restTemplate(ClientHttpRequestInterceptor loggingRequestInterceptor) {
         RestTemplate restTemplate = new RestTemplate();
         restTemplate.setErrorHandler(new ResponseErrorHandler() {

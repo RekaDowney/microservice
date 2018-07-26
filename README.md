@@ -445,6 +445,58 @@
 
 ```
 
+## Ribbon 客户端负载均衡
+
+　　一、确保有多个 provider 服务（相同服务名称不同实例ID）注册到 eureka 中，然后修改 consumer80 的配置文件，添加 eureka 集群交互地址与 provider 服务交互地址
+
+```yaml
+
+    # 将与 provider 服务的交互地址改成 provider 服务的微服务名称而不再是具体的 IP 地址
+    microservice:
+      provider:
+        # baseHost: http://jd.me:8001
+        # 修改地址为向 eureka 注册的服务地址
+        baseHost: http://MicroService-Provider8001
+    
+    ## 添加 eureka 服务发现机制
+    eureka:
+      client:
+        # 不向 eureka 注册服务（因为 consumer 是客户端，是任意的客户，不属于我们的服务，所以不需要注册自身到 eureka 集群中）
+        register-with-eureka: false
+        # 获取已注册服务（向 eureka 集群获取已注册服务信息，这其中就包括了 provider 服务注册的服务信息）
+        fetch-registry: true
+        # erueka 集群交互地址
+        service-url:
+          defaultZone:
+            http://eureka7001:7001/eureka/,http://eureka7002:7002/eureka/,http://eureka7003:7003/eureka/
+
+
+```
+
+　　二、项目启动类添加 @org.springframework.cloud.netflix.eureka.EnableEurekaClient 以使用 eureka 的服务发现功能，同时添加
+　　@org.springframework.cloud.netflix.ribbon.RibbonClient(name = "MicroService-Provider8001") 注解开启 Ribbon Client 配置。此时启动类如下：
+
+```java
+
+    @EnableEurekaClient
+    @SpringBootApplication
+    @RibbonClient(name = "MicroService-Provider8001")
+    public class ConsumerApplication {
+    
+        public static void main(String[] args) throws Exception {
+            SpringApplication.run(ConsumerApplication.class, args);
+        }
+    
+    }
+
+```
+
+　　三、修改与 MicroService-Provider8001 微服务进行交互的 RestTemplate Bean 配置，添加 org.springframework.cloud.client.loadbalancer.LoadBalanced 注解（该注解只能够标注在 RestTemplate 上）该 RestTemplate 使用负载均衡客户端进行交互操作。
+
+　　这时候启动 consumer 模块，每次访问 provider 服务都将根据已经发现的 provider 微服务进行轮询交互。这是因为默认采用了 com.netflix.loadbalancer.RoundRobinRule 轮询规则。
+
+
+
 ## 超链管理区
 
 [EurekaServerPage]: file:///C:/Users/Reka/Desktop/Markdown专辑/SpringCloud/Eureka/Eureka服务端管理页面.jpg "Eureka服务端"

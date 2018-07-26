@@ -10,7 +10,21 @@ logback:
 
 microservice:
   provider:
-    baseHost: http://jd.me:8001
+    # baseHost: http://jd.me:8001
+    # 修改地址为向 eureka 注册的服务地址
+    baseHost: http://MicroService-Provider8001
 
 logging:
-  config: classpath:config/logback-spring.xml # 指定日志实现框架的配置文件路径，可以使用 classpath: 前缀，默认为空串 LoggingApplicationListener#initializeSystem:262
+  # 指定日志实现框架的配置文件路径，可以使用 classpath: 前缀，默认为空串 LoggingApplicationListener#initializeSystem:262
+  config: classpath:config/logback-spring.xml
+
+## 添加 eureka 服务发现机制
+eureka:
+  client:
+    # 不向 eureka 注册服务
+    register-with-eureka: false
+    # 获取已注册服务
+    fetch-registry: true
+    service-url:
+      defaultZone:
+        http://eureka7001:7001/eureka/,http://eureka7002:7002/eureka/,http://eureka7003:7003/eureka/
