@@ -5,6 +5,7 @@ import com.alibaba.druid.support.http.StatViewServlet;
 import com.alibaba.druid.support.http.WebStatFilter;
 import me.junbin.commons.gson.Gsonor;
 import org.springframework.boot.web.embedded.tomcat.TomcatConnectorCustomizer;
+import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -69,11 +70,19 @@ public class MvcConfiguration extends WebMvcConfigurationSupport {
         converters.add(gsonHttpMessageConverter);
     }
 
-
     @Bean
     public TomcatConnectorCustomizer tomcatConnectorCustomizer() {
         // 60 秒内关闭 Tomcat
         return new GracefulShutdownTomcat(60);
+    }
+
+    // 通过该 ServerFactory 生成 TomcatWebServer
+    // （servlet 容器采用 TomcatServletWebServerFactory，reactive 容器采用 TomcatReactiveWebServerFactory）
+    @Bean
+    public TomcatServletWebServerFactory tomcatServerFactory(TomcatConnectorCustomizer tomcatConnectorCustomizer) {
+        TomcatServletWebServerFactory serverFactory = new TomcatServletWebServerFactory();
+        serverFactory.addConnectorCustomizers(tomcatConnectorCustomizer);
+        return serverFactory;
     }
 
 }

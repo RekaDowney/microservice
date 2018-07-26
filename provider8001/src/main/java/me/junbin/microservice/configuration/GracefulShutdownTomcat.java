@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
  * @author : Zhong Junbin
  * @email : <a href="mailto:rekadowney@gmail.com">发送邮件</a>
  * @createDate : 2018-07-26 17:47
- * @description : 添加停止 SpringBoot 的优雅处理方案，通过 kill -SEGTERM ${springbootPid} 或者 kill -15 ${springbootPid} 方式请求停止 SpringBoot
+ * @description : 添加停止 SpringBoot 的优雅处理方案，通过 kill -SIGTERM ${springbootPid} 或者 kill -15 ${springbootPid} 方式请求停止 SpringBoot
  */
 public class GracefulShutdownTomcat implements TomcatConnectorCustomizer, ApplicationListener<ContextClosedEvent> {
 
