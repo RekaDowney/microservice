@@ -6,9 +6,9 @@ import com.alibaba.druid.support.http.WebStatFilter;
 import me.junbin.commons.gson.Gsonor;
 import org.springframework.boot.web.embedded.tomcat.TomcatConnectorCustomizer;
 import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
+import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
-import org.springframework.boot.web.servlet.server.ServletWebServerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.ByteArrayHttpMessageConverter;
@@ -77,6 +77,13 @@ public class MvcConfiguration extends WebMvcConfigurationSupport {
         return new GracefulShutdownTomcat(60);
     }
 
+    @Bean
+    public WebServerFactoryCustomizer<TomcatServletWebServerFactory> customizer(TomcatConnectorCustomizer tomcatConnectorCustomizer) {
+        return serverFactory -> serverFactory.addConnectorCustomizers(tomcatConnectorCustomizer);
+    }
+
+/*
+
     // 通过该 ServerFactory 生成 TomcatWebServer
     // （servlet 容器采用 TomcatServletWebServerFactory，reactive 容器采用 TomcatReactiveWebServerFactory）
     @Bean
@@ -85,6 +92,7 @@ public class MvcConfiguration extends WebMvcConfigurationSupport {
         serverFactory.addConnectorCustomizers(tomcatConnectorCustomizer);
         return serverFactory;
     }
+*/
 
 }
 /*
