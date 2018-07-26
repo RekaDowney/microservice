@@ -4,6 +4,7 @@ import com.alibaba.druid.support.http.ResourceServlet;
 import com.alibaba.druid.support.http.StatViewServlet;
 import com.alibaba.druid.support.http.WebStatFilter;
 import me.junbin.commons.gson.Gsonor;
+import org.springframework.boot.web.embedded.tomcat.TomcatConnectorCustomizer;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -66,6 +67,13 @@ public class MvcConfiguration extends WebMvcConfigurationSupport {
         converters.add(new AllEncompassingFormHttpMessageConverter());
         //converters.add(new MappingJackson2HttpMessageConverter());
         converters.add(gsonHttpMessageConverter);
+    }
+
+
+    @Bean
+    public TomcatConnectorCustomizer tomcatConnectorCustomizer() {
+        // 60 秒内关闭 Tomcat
+        return new GracefulShutdownTomcat(60);
     }
 
 }
