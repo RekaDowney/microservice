@@ -72,13 +72,13 @@ public class MvcConfiguration extends WebMvcConfigurationSupport {
     }
 
     @Bean
-    public TomcatConnectorCustomizer tomcatConnectorCustomizer() {
+    public static TomcatConnectorCustomizer tomcatConnectorCustomizer() {
         // 60 秒内关闭 Tomcat
         return new GracefulShutdownTomcat(60);
     }
 
     @Bean
-    public WebServerFactoryCustomizer<TomcatServletWebServerFactory> customizer(TomcatConnectorCustomizer tomcatConnectorCustomizer) {
+    public static WebServerFactoryCustomizer<TomcatServletWebServerFactory> customizer(TomcatConnectorCustomizer tomcatConnectorCustomizer) {
         return serverFactory -> serverFactory.addConnectorCustomizers(tomcatConnectorCustomizer);
     }
 
