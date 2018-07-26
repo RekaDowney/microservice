@@ -8,6 +8,7 @@ import org.springframework.boot.web.embedded.tomcat.TomcatConnectorCustomizer;
 import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
+import org.springframework.boot.web.servlet.server.ServletWebServerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.ByteArrayHttpMessageConverter;
@@ -79,7 +80,7 @@ public class MvcConfiguration extends WebMvcConfigurationSupport {
     // 通过该 ServerFactory 生成 TomcatWebServer
     // （servlet 容器采用 TomcatServletWebServerFactory，reactive 容器采用 TomcatReactiveWebServerFactory）
     @Bean
-    public TomcatServletWebServerFactory tomcatServerFactory(TomcatConnectorCustomizer tomcatConnectorCustomizer) {
+    public ServletWebServerFactory tomcatServerFactory(TomcatConnectorCustomizer tomcatConnectorCustomizer) {
         TomcatServletWebServerFactory serverFactory = new TomcatServletWebServerFactory();
         serverFactory.addConnectorCustomizers(tomcatConnectorCustomizer);
         return serverFactory;
