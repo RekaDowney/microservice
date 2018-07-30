@@ -44,6 +44,7 @@ eureka:
 #    # Eureka Server 在收到心跳检测后，等待多久没有收到下个心跳检测包则移除当前服务，默认为 90（秒），
 #    lease-expiration-duration-in-seconds: 90
 
+
 # 配置 Eureka 服务信息，此时访问 ${hostname}:${server.port}/actuator/info 即可看到如下 json
 # {"app":{"name":"microservice"},"company":{"name":"joyley"},"build":{"version":1.0,"artifactId":"provider8001"}}
 info:
