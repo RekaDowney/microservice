@@ -13,6 +13,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
  * @description :
  */
 @EnableEurekaClient
+//@SpringBootApplication(scanBasePackageClasses = {ConsumerFeignApplication.class, FeignUserService.class})
 @SpringBootApplication
 // 通过 basePackageClasses 或者 basePackage 或者 value 指定扫描被
 // org.springframework.cloud.openfeign.FeignClient 标注的类

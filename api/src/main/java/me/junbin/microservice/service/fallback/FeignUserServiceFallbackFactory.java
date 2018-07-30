@@ -15,6 +15,7 @@ import java.util.List;
  * @createDate : 2018-07-30 10:28
  * @description : 特别注意：实现 {@link FallbackFactory<FeignClient>} 接口的类必须注册到 Spring 后才能在被 {@link FeignClient} 标注的类中所使用
  */
+//@Component
 public class FeignUserServiceFallbackFactory implements FallbackFactory<FeignUserService> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FeignUserServiceFallbackFactory.class);

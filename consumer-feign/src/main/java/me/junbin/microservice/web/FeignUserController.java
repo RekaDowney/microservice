@@ -3,9 +3,6 @@ package me.junbin.microservice.web;
 import me.junbin.microservice.domain.User;
 import me.junbin.microservice.service.FeignUserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,7 +19,6 @@ public class FeignUserController {
 
     @Autowired
     private FeignUserService userService;
-
 
     @GetMapping("/{id:\\d+}")
     public User query(@PathVariable long id) {

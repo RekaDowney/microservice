@@ -18,6 +18,8 @@ import java.util.List;
 @FeignClient(name = "${microservice.provider.name}", fallbackFactory = FeignUserServiceFallbackFactory.class)
 public interface FeignUserService {
 
+    // 默认会通过轮询的方式来访问服务
+
     @PostMapping
     void append(User user);
 

@@ -97,6 +97,7 @@ public class RoundRobinTimesRule extends AbstractLoadBalancerRule {
                     return current;
                 }
             } else {
+                // 更新当前次数为 1 而不是 0，这是因为当前返回的 next 已经算是访问了 1 次
                 if (currentServerTimesCounter.compareAndSet(currentTimes, 1)) {
                     int next = (current + 1) % serverCount;
                     if (nextServerCyclicCounter.compareAndSet(current, next)) {
