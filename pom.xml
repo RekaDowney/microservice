@@ -13,6 +13,7 @@
         <module>eureka-server7001</module>
         <module>eureka-server7002</module>
         <module>eureka-server7003</module>
+        <module>consumer-feign</module>
     </modules>
 
     <parent>
@@ -40,6 +41,7 @@
         <springcloud.eureka.version>2.0.0.RELEASE</springcloud.eureka.version>
         <springcloud.config.version>2.0.0.RELEASE</springcloud.config.version>
         <springcloud.ribbon.version>2.0.0.RELEASE</springcloud.ribbon.version>
+        <springcloud.openfeign.version>2.0.0.RELEASE</springcloud.openfeign.version>
     </properties>
 
     <dependencies>

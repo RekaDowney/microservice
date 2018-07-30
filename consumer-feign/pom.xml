@@ -7,23 +7,26 @@
         <groupId>me.junbin.microservice</groupId>
         <version>1.0</version>
     </parent>
-
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>api</artifactId>
+    <artifactId>consumer-feign</artifactId>
 
-    <name>microservice api</name>
-    <description>SpringCloud MicroService</description>
+    <name>microservice consumer-feign 微服务消费端 feign 实现</name>
+    <description>SpringCloud MicroService Feign</description>
 
     <properties>
     </properties>
 
     <dependencies>
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.16.22</version>
-            <optional>true</optional>
+            <groupId>me.junbin.microservice</groupId>
+            <artifactId>api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
         </dependency>
 
         <!-- feign 依赖 -->
@@ -33,6 +36,44 @@
             <version>${springcloud.openfeign.version}</version>
         </dependency>
         <!-- feign 依赖 -->
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+        </dependency>
+
+        <!-- eureka 客户端依赖（这里使用 Eureka 的服务发现功能） -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-config</artifactId>
+            <version>${springcloud.config.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+            <version>${springcloud.eureka.version}</version>
+        </dependency>
+        <!-- eureka 客户端依赖（这里使用 Eureka 的服务发现功能） -->
+
+        <!-- Ribbon 消费端（客户端）负载均衡 -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-netflix-ribbon</artifactId>
+            <version>${springcloud.ribbon.version}</version>
+        </dependency>
+        <!-- Ribbon 消费端（客户端）负载均衡 -->
+
     </dependencies>
 
     <build>
@@ -70,5 +111,4 @@
             </plugins>
         </pluginManagement>
     </build>
-
 </project>
