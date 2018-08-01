@@ -49,7 +49,8 @@ public class ConsumerAppConfiguration {
     // 修改默认的负载规则
     @Bean
     public IRule customRule() {
-        // 默认为 轮询
+        // 默认为 com.netflix.loadbalancer.ZoneAvoidanceRule 这个负载规则，
+        // 其（父类：com.netflix.loadbalancer.ClientConfigEnabledRoundRobinRule）内部持有一个 com.netflix.loadbalancer.ClientConfigEnabledRoundRobinRule 轮询负载规则实例
 //        return new RoundRobinRule();
         // 随机负载
 //        return new RandomRule();

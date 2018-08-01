@@ -25,6 +25,13 @@ public class FeignUserController {
         return userService.findById(id);
     }
 
+    @DeleteMapping("/{id:\\d+}")
+    public User delete(@PathVariable long id) {
+        User user = userService.findById(id);
+        userService.delete(id);
+        return user;
+    }
+
     @PostMapping
     public User append(@RequestBody User user) {
         userService.append(user);

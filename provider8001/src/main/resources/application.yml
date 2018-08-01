@@ -18,6 +18,8 @@ logging:
 
 mybatis:
   type-aliases-package: me.junbin.microservice.domain
+#  configuration:
+#    vfs-impl: org.mybatis.spring.boot.autoconfigure.SpringBootVFS
 #  type-handlers-package: me.junbin.commons.converter.mybatis
 #  mapper-locations: classpath:mapper/**/*.xml
 #  configuration:

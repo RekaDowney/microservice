@@ -493,8 +493,246 @@
 
 　　三、修改与 MicroService-Provider8001 微服务进行交互的 RestTemplate Bean 配置，添加 org.springframework.cloud.client.loadbalancer.LoadBalanced 注解（该注解只能够标注在 RestTemplate 上）该 RestTemplate 使用负载均衡客户端进行交互操作。
 
-　　这时候启动 consumer 模块，每次访问 provider 服务都将根据已经发现的 provider 微服务进行轮询交互。这是因为默认采用了 com.netflix.loadbalancer.RoundRobinRule 轮询规则。
+　　这时候启动 consumer 模块，每次访问 provider 服务都将根据已经发现的 provider 微服务进行轮询交互。
+　　这是因为默认采用了 com.netflix.loadbalancer.ZoneAvoidanceRule 负载规则，ZoneAvoidanceRule （父类：com.netflix.loadbalancer.ClientConfigEnabledRoundRobinRule）
+　　内部持有一个 com.netflix.loadbalancer.ClientConfigEnabledRoundRobinRule.roundRobinRule 轮询负载规则实例，通过选择可用的 zone 之后再执行轮询负载。
 
+　　如果没有自定义负载规则，那么默认会在首次执行负载时通过如下逻辑动态创建 com.netflix.loadbalancer.ZoneAvoidanceRule 负载规则
+
+```text
+
+    org.springframework.cloud.netflix.ribbon.RibbonLoadBalancerClient.getLoadBalancer(String serviceId)
+        org.springframework.cloud.netflix.ribbon.SpringClientFactory.getLoadBalancer(String name) 此时会刷新 Spring 容器通过
+            org.springframework.cloud.netflix.ribbon.RibbonClientConfiguration.ribbonLoadBalancer(IClientConfig config, ServerList<Server> serverList, ServerListFilter<Server> serverListFilter, IRule rule, IPing ping, ServerListUpdater serverListUpdater)
+        动态创建 LoadBalancer，LoadBalancer 会通过
+            org.springframework.cloud.netflix.ribbon.RibbonClientConfiguration.ribbonRule(IClientConfig config)
+        动态创建负载规则
+
+    特别注意：不明确自定义负载规则时，通过 （org.springframework.context.ApplicationContext）org.springframework.beans.factory.ListableBeanFactory.getBeansOfType(ZoneAvoidanceRule.class) 是无法获取到该 Bean 的。
+
+```
+
+　　四、我们可以自定义负载规则，只需要往 Spring 容器中注册一个 IRule 类型的 Bean，那么 Ribbon 就会直接使用该负载规则而不是默认动态创建的 ZoneAvoidanceRule 负载规则。
+
+```java
+
+        // 修改默认的负载规则
+        @Bean
+        public IRule customRule() {
+            return new RoundRobinTimesRule();
+        }
+
+```
+
+　　此时第一次使用负载均衡时，将会通过 org.springframework.cloud.netflix.ribbon.RibbonClientConfiguration.ribbonLoadBalancer(IClientConfig config, ServerList<Server> serverList, ServerListFilter<Server> serverListFilter, IRule rule, IPing ping, ServerListUpdater serverListUpdater) 动态创建 LoadBalancer 时将会直接使用我们自定义的 IRule。
+
+## Feign 声明式 HTTP 客户端
+
+　　Feign 是一款声明式的 HTTP 客户端，借助 Feign 可以快速完成 HTTP 交互（比 HttpClient 或者 RestTemplate 更加方便），默认 Feign 仅支持纯文本的 HTTP 交互，所以像图片等一些二进制传输则无法执行（二进制交互可以考虑结合 feign-form 和 feign-form-spring 依赖实现单文件上传，遇到多文件也不行）
+
+### API 模块改动
+
+　　一、添加 feign 依赖
+
+```xml
+
+        <!-- feign 声明式 HTTP 客户端依赖 -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+            <version>${springcloud.openfeign.version}</version>
+        </dependency>
+        <!-- feign 声明式 HTTP 客户端依赖 -->
+
+```
+
+　　二、编写 Feign 的 HTTP 交互类 me.junbin.microservice.service.FeignUserService
+
+```java
+
+    @RequestMapping("/user")
+    @FeignClient(name = "${microservice.provider.name}")
+    public interface FeignUserService {
+    
+        @PostMapping
+        void append(User user);
+    
+        @DeleteMapping("/{id:\\d+}")
+        void delete(@PathVariable("id") Long id);
+    
+        @GetMapping("/{id:\\d+}")
+        User findById(@PathVariable("id") Long id);
+    
+        @GetMapping("/list")
+        List<User> findAll();
+    
+    }
+
+```
+
+　　这里的 @FeignClient 注解，主要通过 ${microservice.provider.name} 配置服务名称，这里没有使用字面值而是采用了占位符方式，这样服务名称可以直接由使用方配置管理。
+
+　　需要注意的是：旧版本的 SpringCloud 的 feign 依赖 artifactId 为 spring-cloud-starter-feign，2.0.0.RELEASE 开始切换成 spring-cloud-starter-openfeign。至少在 2.0.0.RELEASE 开始支持 GetMapping，PostMapping 等 RequestMapping 衍生注解（旧版本中则不支持）；但是不支持使用形如 @GetMapping("/{id:\\d+}") 等形式的 SpringMVC 正则校验。 
+
+### 新模块 consumer-feign
+
+　　一、pom 依赖，复制 consumer80 模块的依赖并添加 feign 依赖
+
+```xml
+
+        <!-- feign 声明式 HTTP 客户端依赖 -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+            <version>${springcloud.openfeign.version}</version>
+        </dependency>
+        <!-- feign 声明式 HTTP 客户端依赖 -->
+
+```
+
+　　二、application.yml 配置
+
+```yaml
+
+    server:
+      port: 80
+    
+    microservice:
+      provider:
+        name: MicroService-Provider8001
+    
+    # 使用 eureka 的服务发现功能
+    eureka:
+      client:
+        register-with-eureka: false
+        fetch-registry: true
+        service-url:
+          defaultZone: http://eureka7001:7001/eureka/,http://eureka7002:7002/eureka/,http://eureka7003:7003/eureka/
+    
+```
+
+　　三、SpringBoot 启动类配置
+
+```java
+
+    @EnableEurekaClient
+    //@SpringBootApplication(scanBasePackageClasses = {ConsumerFeignApplication.class, FeignUserService.class})
+    @SpringBootApplication
+    // 通过 basePackageClasses 或者 basePackage 或者 value 指定扫描被
+    // org.springframework.cloud.openfeign.FeignClient 标注的类
+    @EnableFeignClients(basePackageClasses = FeignUserService.class)
+    // 除了通过 EnableFeignClients 指定扫描路径外，还可以直接通过 ComponentScan 注解 或者
+    // org.springframework.boot.autoconfigure.SpringBootApplication.scanBasePackages 等方法添加扫描路径
+    //@ComponentScan(basePackageClasses = FeignUserService.class)
+    public class ConsumerFeignApplication {
+    
+        public static void main(String[] args) throws Exception {
+            SpringApplication.run(ConsumerFeignApplication.class, args);
+        }
+    
+    }
+
+```
+
+　　首先通过 @EnableEurekaClient 启动 Eureka 客户端功能，接着使用 @EnableFeignClients(basePackageClasses = FeignUserService.class) 指定 feign 的包扫描路径，实际上也可以直接使用 SpringBootApplication 注解的 scanBasePackageClasses 方法或者用 @ComponentScan(basePackageClasses = FeignUserService.class) 等方式进行扫描，主要能够保证被 @FeignClient 标注的类能够作为 Spring Bean 存在即可。
+
+　　四、编写 FeignUserController 来使用 FeignUserService 功能
+
+```java
+
+    @RestController
+    @RequestMapping("/consumer/user")
+    public class FeignUserController {
+    
+        @Autowired
+        private FeignUserService userService;
+    
+        @GetMapping("/{id:\\d+}")
+        public User query(@PathVariable long id) {
+            return userService.findById(id);
+        }
+    
+        @DeleteMapping("/{id:\\d+}")
+        public User delete(@PathVariable long id) {
+            User user = userService.findById(id);
+            userService.delete(id);
+            return user;
+        }
+    
+        @PostMapping
+        public User append(@RequestBody User user) {
+            userService.append(user);
+            return userService.findAll().stream()
+                    .filter(u -> u.getUsername().equals(user.getUsername()))
+                    .findFirst().orElse(new User());
+        }
+    
+        @GetMapping("/list")
+        public List<User> list() {
+            return userService.findAll();
+        }
+    
+    }
+
+
+```
+
+　　可以看到，我们通过注入 FeignUserService 之后就可以与 eureka 中已注册的服务做交互了。同时，我们看到 FeignUserService 类上标注的 @FeignClient#name 为 ${microservice.provider.name}，这里会读取我们在 application.yml 配置文件中的配置项数据。借此保证交互服务的正确性。
+
+### Feign 执行流程简单解析
+
+　　由于 spring-cloud-starter-openfeign 默认集成 spring-cloud-starter-netflix-ribbon 模块，并且在 feign 模块中的 META-INF/spring.factories 指定了 org.springframework.cloud.openfeign.ribbon.FeignRibbonClientAutoConfiguration 自动配置类，该自动配置类会
+
+```java
+
+        // 检测是否存在 RetryTemplate 这个类来动态创建 CachingSpringLoadBalancerFactory 类 
+    	@Bean
+    	@Primary
+    	@ConditionalOnMissingClass("org.springframework.retry.support.RetryTemplate")
+    	public CachingSpringLoadBalancerFactory cachingLBClientFactory(
+    			SpringClientFactory factory) {
+    		return new CachingSpringLoadBalancerFactory(factory);
+    	}
+    
+    	@Bean
+    	@Primary
+    	@ConditionalOnClass(name = "org.springframework.retry.support.RetryTemplate")
+    	public CachingSpringLoadBalancerFactory retryabeCachingLBClientFactory(
+    		SpringClientFactory factory,
+    		LoadBalancedRetryFactory retryFactory) {
+    		return new CachingSpringLoadBalancerFactory(factory, retryFactory);
+    	}
+
+```
+
+　　FeignRibbonClientAutoConfiguration 会同时引入 DefaultFeignLoadBalancedConfiguration 配置类，该配置类生成一个 org.springframework.cloud.openfeign.ribbon.LoadBalancerFeignClient 实例作为 Spring Bean。
+
+```java
+
+    @Configuration
+    class DefaultFeignLoadBalancedConfiguration {
+    	@Bean
+    	@ConditionalOnMissingBean
+    	public Client feignClient(CachingSpringLoadBalancerFactory cachingFactory,
+    							  SpringClientFactory clientFactory) {
+    		return new LoadBalancerFeignClient(new Client.Default(null, null),
+    				cachingFactory, clientFactory);
+    	}
+    }
+
+
+```
+　　
+　　调用被 @FeignClient 注解标注的类方法时，将有如下执行过程：
+
+```text
+    
+    org.springframework.cloud.openfeign.ribbon.LoadBalancerFeignClient.execute(Request request, Request.Options options)
+        org.springframework.cloud.openfeign.ribbon.LoadBalancerFeignClient.lbClient(String clientName)
+            org.springframework.cloud.openfeign.ribbon.CachingSpringLoadBalancerFactory.create(String clientName)
+                org.springframework.cloud.netflix.ribbon.RibbonClientConfiguration.ribbonLoadBalancer // 到这里已经是 Ribbon 的逻辑了 
+
+```
 
 
 ## 超链管理区

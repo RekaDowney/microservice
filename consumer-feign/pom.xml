@@ -29,13 +29,13 @@
             <artifactId>gson</artifactId>
         </dependency>
 
-        <!-- feign 依赖 -->
+        <!-- feign 声明式 HTTP 客户端依赖 -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-openfeign</artifactId>
             <version>${springcloud.openfeign.version}</version>
         </dependency>
-        <!-- feign 依赖 -->
+        <!-- feign 声明式 HTTP 客户端依赖 -->
 
         <dependency>
             <groupId>org.springframework.boot</groupId>

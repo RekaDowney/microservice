@@ -23,7 +23,7 @@ public class ConsumerFeignAppConfiguration {
         return new FeignUserServiceFallbackFactory();
     }
 
-    // 通过往容器中添加 Ribbon 负载规则，可以覆盖 Feign 默认的 RoundRobinRule 轮询负载规则
+    // 通过往容器中添加 Ribbon 负载规则，可以覆盖 Feign 默认的 ZoneAvoidanceRule 轮询负载规则
     @Bean
     public IRule customRule() {
         return new RoundRobinTimesRule();
