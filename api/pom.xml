@@ -33,6 +33,13 @@
             <version>${springcloud.openfeign.version}</version>
         </dependency>
         <!-- feign 声明式 HTTP 客户端依赖 -->
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

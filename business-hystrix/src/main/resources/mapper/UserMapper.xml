@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.junbin.microservice.biz.repo.UserRepo">
+
+    <insert id="insert">
+        INSERT INTO USER (USERNAME, DB_SOURCE) VALUES (#{username}, DATABASE())
+        <selectKey resultType="long" statementType="STATEMENT" order="AFTER" keyColumn="ID" keyProperty="id">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <delete id="deleteById">
+        DELETE FROM USER
+        WHERE ID = #{id}
+    </delete>
+
+    <select id="findById" resultType="user">
+        SELECT *
+        FROM USER
+        WHERE ID = #{id}
+    </select>
+
+    <select id="findAll" resultType="user">
+        SELECT *
+        FROM USER
+    </select>
+
+</mapper>

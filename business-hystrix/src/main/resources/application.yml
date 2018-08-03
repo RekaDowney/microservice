@@ -1,0 +1,56 @@
+logback:
+  context:
+    name: logback     # 设置 logback 的 contextName
+  log:
+    charset: UTF-8    # 日志文件编码
+    path: ./logs      # 用来存储所有日志的目录
+
+server:
+  port: 8001
+spring:
+  application:
+    name: MicroService-Hystrix-Biz
+  output:
+    ansi:
+      enabled: always
+logging:
+  config: classpath:config/logback-spring.xml # 指定日志实现框架的配置文件路径，可以使用 classpath: 前缀，默认为空串 LoggingApplicationListener#initializeSystem:262
+
+mybatis:
+  type-aliases-package: me.junbin.microservice.domain
+#  configuration:
+#    vfs-impl: org.mybatis.spring.boot.autoconfigure.SpringBootVFS
+#  type-handlers-package: me.junbin.commons.converter.mybatis
+#  mapper-locations: classpath:mapper/**/*.xml
+#  configuration:
+#    map-underscore-to-camel-case: true
+#    default-statement-timeout: 3000
+
+eureka:
+  client:
+    # 是否需要向 eureka 服务端注册自身信息（以成为 eureka 客户端）
+    register-with-eureka: true
+    # 是否需要向 eureka 服务端获取抓取 eureka 客户端信息
+    fetch-registry: true
+    service-url:
+      # eureka 服务端交互地址
+      defaultZone: http://eureka7001:7001/eureka/,http://eureka7002:7002/eureka/,http://eureka7003:7003/eureka/
+  instance:
+    # 修改当前 Eureka 服务的实例名称。配置该属性后，实例名称就不再采用 hostname:${spring.application.name}:${server.port} 配置值
+    instance-id: local_biz
+    # 访问服务信息时，采用 IP 而不是 hostname 的形式（比如：默认访问当前服务信息路径为：/info，此时完整地址可能是 localhost:8001/info，配置为 true 之后，访问地址变成了 127.0.0.1:8081/info ）
+    prefer-ip-address: true
+#  instance:
+#    # 心跳检测时间间隔（续约更新时间间隔），默认为 30（秒）
+#    lease-renewal-interval-in-seconds: 30
+#    # Eureka Server 在收到心跳检测后，等待多久没有收到下个心跳检测包则移除当前服务，默认为 90（秒），
+#    lease-expiration-duration-in-seconds: 90
+
+
+# 配置 Eureka 服务信息，此时访问 ${hostname}:${server.port}/actuator/info 即可看到如下 json
+# {"app":{"name":"microservice"},"company":{"name":"joyley"},"build":{"version":1.0,"artifactId":"provider8001"}}
+info:
+  app.name: microservice
+  company.name: joyley
+  build.version: @project.version@
+  build.artifactId: @project.artifactId@

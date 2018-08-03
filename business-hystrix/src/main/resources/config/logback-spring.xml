@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration scan="true" scanPeriod="30 minutes" debug="false">
+
+    <!-- 由于没有使用 ch.qos.logback.ext.spring.web.LogbackConfigListener 监听器，因此必须将 logback.xml 放到 classpath 的一级目录下 -->
+
+    <!-- 引入 logback 属性键值对配置文件 -->
+    <!--<property resource="bundle/logback.properties"/>-->
+
+    <!-- 使用 springProperty 定义属性键值对 -->
+    <springProperty source="logback.log.charset" name="logCharset" defaultValue="UTF-8" scope="context"/>
+    <springProperty source="logback.context.name" name="contextName" defaultValue="logback" scope="context"/>
+    <springProperty source="logback.log.path" name="logPath" scope="context"/>
+
+    <contextName>${contextName}</contextName>
+
+    <!--
+        <contextName>${logback.context.name}</contextName>
+
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="me.junbin.learning.springboot.logback.CustomPatternLayoutEncoder">
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) %clr(${PID:- }){green} %brightClr(\(%class#%M@%line\)){green} %msg%n</pattern>
+                <charset class="java.nio.charset.Charset">${log.charset}</charset>
+                <immediateFlush/>
+            </encoder>
+        </appender>
+    -->
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>
+                %d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) %green(%class#%M:%line) %msg%n
+            </pattern>
+            <charset class="java.nio.charset.Charset">${logCharset}</charset>
+            <immediateFlush/>
+        </encoder>
+    </appender>
+
+    <springProfile name="dev">
+        <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <file>${logPath}/springboot.log</file>
+
+            <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+                <level>DEBUG</level>
+            </filter>
+
+            <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                <fileNamePattern>${logPath}/springboot.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
+                <maxFileSize>10MB</maxFileSize>
+            </rollingPolicy>
+
+            <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+                <pattern>
+                    %d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) %green(%class#%M:%line) %msg%n
+                </pattern>
+                <charset class="java.nio.charset.Charset">${logCharset}</charset>
+                <immediateFlush/>
+            </encoder>
+
+        </appender>
+
+        <root level="DEBUG">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="!dev">
+        <root level="DEBUG">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+</configuration>

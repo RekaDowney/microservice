@@ -735,6 +735,15 @@
 ```
 
 
+## Hystrix 服务熔断和服务降级
+
+### 服务端执行服务熔断
+
+
+
+### 客户端执行服务降级
+　　
+
 ## 超链管理区
 
 [EurekaServerPage]: file:///C:/Users/Reka/Desktop/Markdown专辑/SpringCloud/Eureka/Eureka服务端管理页面.jpg "Eureka服务端"

@@ -9,9 +9,9 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>provider8001</artifactId>
+    <artifactId>business-hystrix</artifactId>
 
-    <name>microservice provider8001 微服务提供方 8001 端口</name>
+    <name>microservice business-hystrix 微服务业务提供方</name>
     <description>SpringCloud MicroService</description>
 
     <properties>
@@ -88,6 +88,15 @@
         </dependency>
         <!-- springboot 服务监控依赖（eureka、hystrix、zuul 等需要用到） -->
 
+        <!-- hystrix 服务熔断和服务降级 -->
+        <!-- 旧版本的 hystrix artifactId 为 spring-cloud-starter-hystrix -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-hystrix</artifactId>
+            <version>${springcloud.hystrix.version}</version>
+        </dependency>
+        <!-- hystrix 服务熔断和服务降级 -->
+
     </dependencies>
 
     <build>
@@ -133,7 +142,5 @@
                 <version>2.0.3.RELEASE</version>
             </plugin>
         </plugins>
-
     </build>
-
 </project>

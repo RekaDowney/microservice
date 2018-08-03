@@ -1,0 +1,24 @@
+{
+  "groups": [
+    {
+      "name": "logback"
+    }
+  ],
+  "properties": [
+    {
+      "name": "logback.context.name",
+      "type": "java.lang.String",
+      "description": "logback 的上下文名称."
+    },
+    {
+      "name": "logback.log.charset",
+      "type": "java.nio.charset.Charset",
+      "description": "logback 日志文件的字符编码."
+    },
+    {
+      "name": "logback.log.path",
+      "type": "java.lang.String",
+      "description": "logback 日志文件的存储路径."
+    }
+  ]
+}
