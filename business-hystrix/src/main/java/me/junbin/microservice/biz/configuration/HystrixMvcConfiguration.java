@@ -3,6 +3,7 @@ package me.junbin.microservice.biz.configuration;
 import com.alibaba.druid.support.http.ResourceServlet;
 import com.alibaba.druid.support.http.StatViewServlet;
 import com.alibaba.druid.support.http.WebStatFilter;
+import com.netflix.hystrix.contrib.metrics.eventstream.HystrixMetricsStreamServlet;
 import me.junbin.commons.gson.Gsonor;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
@@ -44,6 +45,13 @@ public class HystrixMvcConfiguration extends WebMvcConfigurationSupport {
         // initParameters.put(ResourceServlet.PARAM_NAME_DENY, "192.168.0.1");
         bean.setInitParameters(initParameters);
         return bean;
+    }
+
+    // Spring Cloud 1.X 不需要我们手动注册，但 Spring Cloud 2.X 开始需要我们手动配置该 Servlet
+    // 注册 Hystrix 监控用的 Servlet
+    @Bean
+    public ServletRegistrationBean<HystrixMetricsStreamServlet> hystrixStreamServlet() {
+        return new ServletRegistrationBean<>(new HystrixMetricsStreamServlet(), "/hystrix.stream");
     }
 
     @Bean

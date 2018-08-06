@@ -739,12 +739,357 @@
 
 ### 服务端执行服务熔断
 
+　　Hystrix 在服务端实现的功能为服务熔断，服务熔断可以有效避免当某个微服务超时或者不可用时，造成整体服务雪崩（级联故障）。Hystrix 通过断路器这种装置，当某个服务单元发生故障后，由断路器的故障监控，向服务调用方返回一个符合预期、可处理的备选响应（fallback），而不是长时间等待或者抛出调用方无法处理的异常。这样就保证了服务调用方的线程不会被长时间、不必要地占用，从而避免了故障在分布式系统中的蔓延、乃至雪崩。
 
+　　一、pom 文件改动（新模块 business-hystrix，从 provider8001 派生）
+
+```xml
+
+    <!-- hystrix 服务熔断和服务降级 -->
+    <!-- 旧版本的 hystrix artifactId 为 spring-cloud-starter-hystrix -->
+    <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-netflix-hystrix</artifactId>
+        <version>${springcloud.hystrix.version}</version>
+    </dependency>
+    <!-- hystrix 服务熔断和服务降级 -->
+
+```
+
+　　二、服务层/控制层熔断
+
+　　服务层熔断示例
+
+```java
+
+    @Service
+    public class UserServiceImpl implements UserService {
+    
+        @Override
+        // 这里通过 HystrixCommand 指定发生故障时的熔断处理方法为 appendFail 方法
+        // Hystrix 会优先查找 appendFail(..args, Throwable) 方法；如果该方法不存在，则继续查找 appendFail(...args) 方法；如果该方法也不存在，那么直接抛出如下异常
+        // com.netflix.hystrix.contrib.javanica.exception.FallbackDefinitionException
+        // fallback method wasn't found: appendFail([User])] with root cause
+        @HystrixCommand(fallbackMethod = "appendFail")
+        public void append(User user) {
+            userRepo.insert(user);
+        }
+        
+        // 添加客户Reka失败。异常堆栈为：
+        //org.springframework.dao.DuplicateKeyException:
+        //### Error updating database.  Cause: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry 'Reka' for key 'UNIQUE_IDX_USERNAME'
+        //### The error may involve defaultParameterMap
+        //### The error occurred while setting parameters
+        //### SQL: INSERT INTO USER (USERNAME, DB_SOURCE) VALUES (?, DATABASE())
+        //### Cause: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry 'Reka' for key 'UNIQUE_IDX_USERNAME'
+        //; ]; Duplicate entry 'Reka' for key 'UNIQUE_IDX_USERNAME'; nested exception is java.sql.SQLIntegrityConstraintViolationException: Duplicate entry 'Reka' for key 'UNIQUE_IDX_USERNAME'
+        public void appendFail(User user, Throwable t) {
+            LOGGER.error(String.format("添加客户%s失败。异常堆栈为：", user.getUsername()), t);
+        }
+
+    }
+
+```
+
+　　控制层熔断示例
+
+```java
+
+    @RestController
+    @RequestMapping(value = "/user")
+    public class UserController {
+
+        @GetMapping("/{id:\\d+}")
+        @HystrixCommand(fallbackMethod = "nullToDefaultUser")
+        public User query(@PathVariable("id") long id) {
+            LOGGER.info("请求查询用户（id：{}）", id);
+            User user = userService.findById(id);
+            if (user == null) {
+                throw new NullPointerException();
+            }
+            return user;
+        }
+    
+        // 被 @HystrixCommand#fallbackMethod 修饰的方法，参数列表格式为：@HystrixCommand 修饰的方法的参数列表 再加上 可选的 Throwable 参数
+        // 比如有如下代码
+        // @HystrixCommand(fallbackMethod = "doSomethingFail")
+        // public String doSomething(int arg1, String arg2) {}
+        // public String doSomethingFail(int arg1, String arg2, Throwable t) {}
+        // public String doSomethingFail(int arg1, String arg2) {}
+    
+        // 那么这时候如果 doSomething 抛出了异常，那么服务熔断的时候会优先调用 doSomethingFail(int arg1, String arg2, Throwable t)
+        // 如果 doSomethingFail(int arg1, String arg2, Throwable t) 方法不存在，那么将会执行 doSomethingFail(int arg1, String arg2)
+        // 如果连 doSomethingFail(int arg1, String arg2) 也不存在，则抛出如下异常
+    
+        // Servlet.service() for servlet [dispatcherServlet] in context with path [] threw exception
+        // [Request processing failed; nested exception is com.netflix.hystrix.contrib.javanica.exception.FallbackDefinitionException:
+        // fallback method wasn't found: nullToDefaultUser([long])] with root cause
+        public User nullToDefaultUser(long id, Throwable e) {
+            LOGGER.info("Throwable 异常信息为：{}", e.getMessage());
+            return new User("ID为" + id + "的用户不存在").setId(id);
+        }
+    
+        @GetMapping(value = "/remote/{step1:\\d+}/{step2:\\d+}")
+        // 参考 com.netflix.hystrix.HystrixCommandProperties 类
+        // 特别注意：Hystrix 的 Properties 有两种类型，分别为 commandProperties 和 threadPoolProperties，不同的 properties 有不同的属性，具体参考：
+        // commandProperties --> https://github.com/Netflix/Hystrix/wiki/Configuration#command-properties
+        // threadPoolProperties --> https://github.com/Netflix/Hystrix/wiki/Configuration#threadpool-properties
+        // 如果搞错了属性的类型，那么将会抛出如下异常：
+        // Servlet.service() for servlet [dispatcherServlet] in context with path [] threw exception
+        // [Request processing failed; nested exception is com.netflix.hystrix.contrib.javanica.exception.HystrixPropertyException:
+        //      Failed to set Thread Pool properties. groupKey: 'UserController', commandKey: 'remote', threadPoolKey: 'null'] with root cause
+        //          java.lang.IllegalArgumentException: unknown thread pool property: execution.isolation.thread.timeoutInMilliseconds
+        @HystrixCommand(fallbackMethod = "timeout", commandProperties = {
+                // 执行时间超过4s则超时，超时则抛出 com.netflix.hystrix.exception.HystrixTimeoutException: null
+                @HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "4000"),
+                @HystrixProperty(name = "execution.timeout.enabled", value = "true")
+        })
+        public String remote(@PathVariable int step1, @PathVariable int step2) {
+            try {
+                int cost1 = remoteService.doStep1(step1);
+                int cost2 = remoteService.doStep2(step2);
+                return String.format("%d + %d = %d", cost1, cost2, (cost1 + cost2));
+            } catch (InterruptedException e) {
+                return "Error Occur! action has interrupted!";
+            }
+        }
+        
+        // 优先调用 timeout(int step1, int step2, Throwable t)，此时 Throwable 为 com.netflix.hystrix.exception.HystrixTimeoutException: null
+        public String timeout(int step1, int step2, Throwable t) {
+            String message = String.format("timeout for action with %d, %d", step1, step2);
+            LOGGER.info(message, t);
+            return message;
+        }
+    
+    }
+
+```
+
+　　三、启动类配置
+
+```java
+
+    @EnableEurekaClient
+    @SpringBootApplication
+    @EnableHystrix // 等价于 @EnableCircuitBreaker，启动 Hystrix 服务熔断/降级 支持
+    public class HystrixBusinessApplication {
+    
+        public static void main(String[] args) throws Exception {
+            SpringApplication.run(HystrixBusinessApplication.class, args);
+        }
+    
+    }
+
+```
+
+　　四、测试
+
+　　启动 HystrixBusinessApplication，直接访问 GET /user/1234 将返回 {"id": 1234, "username": "ID为1234的用户不存在"}，这时发生了熔断。POST /user --data {"username": "Reka"} 也会发生熔断；GET /user/remote/1/6 也会发生熔断。
+
+　　五、基本用法解析
+
+　　@HystrixCommand 表示执行该方法时需要 Hystrix 参与监控。这里主要介绍以下几个配置项
+
+- fallbackMethod：指定当注解标注的方法抛出 Throwable 时的熔断处理方法。假设 fallbackMethod=fail。那么当需要熔断时， Hystrix 将会优先查找（当前类中）fail(...args, Throwable) 方法进行熔断处理，如果该方法不存在，那么继续查找 fail(...args) 方法，如果该方法也不存在，那么抛出 com.netflix.hystrix.contrib.javanica.exception.FallbackDefinitionException: fallback method wasn't found: nullToDefaultUser(...args)] with root cause 异常 
+- commandProperties: 指定 Hystrix 监控属性，参考 [Hystrix监控属性介绍][HystrixCommandProperties]。其中常用的有 execution.isolation.thread.timeoutInMilliseconds 属性指定方法执行超时时间，当方法执行超时后，将会执行熔断处理方法，异常为 com.netflix.hystrix.exception.HystrixTimeoutException: null
+- threadPoolProperties: 指定 Hystrix 执行线程属性，参考 [Hystrix执行线程池属性介绍][HystrixThreadPoolProperties]
+
+　　这里需要特别注意：commandProperties 和 threadPoolProperties 各自的属性不可混用，否则将会抛出 com.netflix.hystrix.contrib.javanica.exception.HystrixPropertyException: Failed to set Thread Pool properties. groupKey: 'UserController', commandKey: 'remote', threadPoolKey: 'null'] with root cause java.lang.IllegalArgumentException: unknown thread pool property: execution.isolation.thread.timeoutInMilliseconds
 
 ### 客户端执行服务降级
-　　
+
+　　与 Hystrix 在服务端提供的服务熔断功能不同，Hystrix 在客户端提供的功能是服务降级。（在客户端使用 Hystrix 服务降级时，通常是直接与 Feign 搭配使用的）
+
+　　所谓的服务降级，指的是当某个服务单元不可以用（超时、不可达等）时，暂时舍弃对该服务的调用，此时会使用备选方案执行服务处理。待该服务单元可用后再恢复对该服务单元的调用。
+
+　　一、api 模块改动
+
+　　添加针对 FeignUserService 服务降级处理类
+
+```java
+
+    // 针对 FeignUserService 服务降级处理
+    public class FeignUserServiceFallbackFactory implements FallbackFactory<FeignUserService> {
+    
+        private static final Logger LOGGER = LoggerFactory.getLogger(FeignUserServiceFallbackFactory.class);
+    
+        @Override
+        public FeignUserService create(Throwable cause) {
+            return new FeignUserService() {
+                @Override
+                public void append(User user) {
+                    LOGGER.error(String.format("添加客户 %s 失败", user), cause);
+                }
+    
+                @Override
+                public void delete(Long id) {
+                    LOGGER.error(String.format("删除客户 [id：%d] 失败", id), cause);
+                }
+    
+                @Override
+                public User findById(Long id) {
+                    LOGGER.info(String.format("查询客户 [id：%d] 失败", id), cause);
+                    return new User(String.format("id为%d的客户不存在", id)).setId(id);
+                }
+    
+                @Override
+                public List<User> findAll() {
+                    LOGGER.info("查询客户列表失败", cause);
+                    return null;
+                }
+            };
+        }
+    
+    }
+
+```
+
+　　FeignUserService 开启服务降级配置
+
+```java
+
+    @FeignClient(name = "${microservice.provider.name}", fallbackFactory = FeignUserServiceFallbackFactory.class)
+    public interface FeignUserService {
+        // ...
+    }
+
+```
+
+　　这里通过 fallbackFactory 指定服务降级处理类，这样当服务发生故障时，会直接调用降级处理方法。
+
+　　二、consumer-feign 消费端模块改动
+
+　　修改配置文件 application.yml
+
+```yaml
+
+    # 启动 Feign 的 Hystrix 服务降级，默认是关闭状态
+    feign:
+      hystrix:
+        enabled: true
+
+```
+
+　　将 FeignUserServiceFallbackFactory 注册到 Spring 容器中（必须把 FallbackFactory 实现类注册到 Spring 容器中，否则服务降级不生效）
+
+　　测试，启动 ConsumerFeignApplication，执行 POST /user --data {"username": "Reka"} 将会看到控制台抛出异常，并且响应 200 但响应体为空
+
+
+## Hystrix Dashboard 仪表盘（监控面板）
+
+### hystrix-dashboard 模块
+
+　　一、pom 文件添加 hystrix-dashboard 依赖
+
+```xml
+
+        <!-- Hystrix Dashboard 监控面板依赖，旧版本依赖 artifactId 为 spring-cloud-starter-hystrix-dashboard -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-hystrix-dashboard</artifactId>
+            <version>${springcloud.hystrix.dashboard.version}</version>
+        </dependency>
+        <!-- Hystrix Dashboard 监控面板依赖，旧版本依赖 artifactId 为 spring-cloud-starter-hystrix-dashboard -->
+
+```
+
+　　二、application.yml 配置文件添加端口配置
+
+```yaml
+
+    server:
+      port: 9001
+    
+    spring:
+      application:
+        name: Hystrix Dashboard
+
+```
+
+　　三、启动类
+
+```java
+
+    @SpringBootApplication
+    @EnableHystrixDashboard // 启动 Hystrix Dashboard
+    public class HystrixDashboardApplication {
+    
+        public static void main(String[] args) throws Exception {
+            SpringApplication.run(HystrixDashboardApplication.class, args);
+        }
+    
+    }
+
+```
+
+　　对于 Hystrix Dashboard 模块而言，我们只需要添加 spring-cloud-starter-netflix-hystrix-dashboard 依赖、通过 @EnableHystrixDashboard 注解启动 Hystrix Dashboard 自动配置。
+　　随后直接访问 ${host}:${server.port}/hystrix 即可进入 Hystrix Dashboard 页面。
+
+　　在 Hystrix Dashboard 首页，可以看到 Hystrix Dashboard 支持三种模式的服务监控。即
+
+- Turbine 集群监控（默认集群）。监控地址为 http://turbine-hostname:port/turbine.stream
+- Turbine 集群监控（指定集群）。监控地址为 http://turbine-hostname:port/turbine.stream?culster=${clustName}
+- 单一 Hystrix 应用监控。监控地址为 http://hystrix-app:port/hystrix.stream
+
+　　默认监控延迟为 2000 毫秒，可以自定义监控 Title。
+
+　　输入监控地址后，点击 Monitor Stream 就可以进入监控页面了。
+
+### business-hystrix 模块改动
+
+　　在 Spring Cloud 1.X 中，Hystrix 自动配置默认会注册 HystrixMetricsStreamServlet，访问地址为 /hystrix.stream。而在 Spring Cloud 2.X 中，该自动配置被撤销了，因此需要我们显式注册 HystrixMetricsStreamServlet。
+
+　　在 HystrixMvcConfiguration 中添加如下 Bean 注册：
+
+```java
+
+    // org.springframework.cloud.netflix.hystrix.HystrixStreamEndpoint
+    @Bean
+    public ServletRegistrationBean<HystrixMetricsStreamServlet> hystrixStreamServlet() {
+        return new ServletRegistrationBean<>(new HystrixMetricsStreamServlet(), "/hystrix.stream");
+    }
+
+```
+
+　　需要确保 classpath 下存在 hystrix-metrics-event-stream-*.jar，这样配置后，启动 HystrixBusinessApplication 后，访问 /hystrix.stream 将会以 text/event-stream 格式传输监控数据。
+
+### Dashboard 页面解析
+
+　　输入需要监控的 hystrix.stream 地址并进入[监控页面][HystrixDashboard]后，Hystrix Dashboard 会打印如下日志
+
+```text
+
+    2018-08-06 11:23:41.477 INFO  org.springframework.cloud.netflix.hystrix.dashboard.HystrixDashboardConfiguration$ProxyStreamServlet#doGet:173 
+    
+    Proxy opening connection to: http://localhost:8001/hystrix.stream
+
+```
+
+　　这时候默认监控数据都是空的，因此 Circuit 和 Thread Pools 都是直接展示 Loading... [页面][HystrixDashboardLoading]。
+　　需要我们多次访问监控的应用，才能够展示相关监控图表。图表相关含义如下：
+
+　　实心圆：
+　　　　颜色：依照 绿色 > 黄色 > 橙色 > 红色 健康程度递减。
+　　　　大小：应用流量越大，实心圆就越大。
+　　借助实心圆的这两个特性，可以在大量监控中快速定位到故障实例或高压实例。
+
+　　曲线：记录 2 分钟内的流量变化。
+
+　　Success（绿色）表示成功请求数
+　　Short-Circuited（蓝色）表示熔断请求数
+　　Bad Request（青色Cyan）表示错误请求数
+　　Timeout（橙色）表示超时请求数
+　　Rejected（紫色）表示线程池拒绝请求数
+　　Failure（红色）表示失败/异常请求数
+
+　　最右上角的百分数表示最近10秒错误百分比
+
 
 ## 超链管理区
 
 [EurekaServerPage]: file:///C:/Users/Reka/Desktop/Markdown专辑/SpringCloud/Eureka/Eureka服务端管理页面.jpg "Eureka服务端"
 [EurekaRegisteredInfo]: file:///C:/Users/Reka/Desktop/Markdown专辑/SpringCloud/Eureka/Eureka已注册服务信息.jpg "Eureka已注册服务信息"
+[HystrixCommandProperties]: https://github.com/Netflix/Hystrix/wiki/Configuration#command-properties "Hystrix监控属性介绍"
+[HystrixThreadPoolProperties]: https://github.com/Netflix/Hystrix/wiki/Configuration#threadpool-properties "Hystrix执行线程池属性介绍"
+[HystrixDashboard]: file:///C:/Users/Reka/Desktop/Markdown专辑/SpringCloud/Hystrix/HystrixDashboard.jpg "HystrixDashboard首页"
+[HystrixDashboardLoading]: file:///C:/Users/Reka/Desktop/Markdown专辑/SpringCloud/Hystrix/HystrixDashboardLoading.jpg "HystrixDashboard Loading加载页"

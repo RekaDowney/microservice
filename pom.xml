@@ -15,6 +15,7 @@
         <module>eureka-server7003</module>
         <module>consumer-feign</module>
         <module>business-hystrix</module>
+        <module>hystrix-dashboard</module>
     </modules>
 
     <parent>
@@ -44,6 +45,7 @@
         <springcloud.ribbon.version>2.0.0.RELEASE</springcloud.ribbon.version>
         <springcloud.openfeign.version>2.0.0.RELEASE</springcloud.openfeign.version>
         <springcloud.hystrix.version>2.0.0.RELEASE</springcloud.hystrix.version>
+        <springcloud.hystrix.dashboard.version>2.0.0.RELEASE</springcloud.hystrix.dashboard.version>
     </properties>
 
     <dependencies>

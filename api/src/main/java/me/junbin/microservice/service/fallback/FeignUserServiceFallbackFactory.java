@@ -36,7 +36,7 @@ public class FeignUserServiceFallbackFactory implements FallbackFactory<FeignUse
             @Override
             public User findById(Long id) {
                 LOGGER.info(String.format("查询客户 [id：%d] 失败", id), cause);
-                return null;
+                return new User(String.format("id为%d的客户不存在", id)).setId(id);
             }
 
             @Override

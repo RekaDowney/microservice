@@ -30,12 +30,24 @@
         </dependency>
 
         <!-- feign 声明式 HTTP 客户端依赖 -->
+        <!-- feing 依赖本身包含了 hystrix，所以即使不添加 hystrix 依赖，feign 依然能够通过 feign.hystrix.enabled 配置项直接启动 hystrix 服务降级功能 -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-openfeign</artifactId>
             <version>${springcloud.openfeign.version}</version>
         </dependency>
         <!-- feign 声明式 HTTP 客户端依赖 -->
+
+        <!-- hystrix 服务熔断和服务降级 -->
+        <!-- 旧版本的 hystrix artifactId 为 spring-cloud-starter-hystrix -->
+        <!--
+                <dependency>
+                    <groupId>org.springframework.cloud</groupId>
+                    <artifactId>spring-cloud-starter-netflix-hystrix</artifactId>
+                    <version>${springcloud.hystrix.version}</version>
+                </dependency>
+        -->
+        <!-- hystrix 服务熔断和服务降级 -->
 
         <dependency>
             <groupId>org.springframework.boot</groupId>

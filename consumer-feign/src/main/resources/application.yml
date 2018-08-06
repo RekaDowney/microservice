@@ -12,3 +12,7 @@ eureka:
     service-url:
       defaultZone: http://eureka7001:7001/eureka/,http://eureka7002:7002/eureka/,http://eureka7003:7003/eureka/
 
+# 启动 Feign 的 Hystrix 服务降级
+feign:
+  hystrix:
+    enabled: true
