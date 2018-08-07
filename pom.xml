@@ -16,6 +16,7 @@
         <module>consumer-feign</module>
         <module>business-hystrix</module>
         <module>hystrix-dashboard</module>
+        <module>zuul</module>
     </modules>
 
     <parent>
@@ -46,6 +47,7 @@
         <springcloud.openfeign.version>2.0.0.RELEASE</springcloud.openfeign.version>
         <springcloud.hystrix.version>2.0.0.RELEASE</springcloud.hystrix.version>
         <springcloud.hystrix.dashboard.version>2.0.0.RELEASE</springcloud.hystrix.dashboard.version>
+        <springcloud.zuul.version>2.0.0.RELEASE</springcloud.zuul.version>
     </properties>
 
     <dependencies>

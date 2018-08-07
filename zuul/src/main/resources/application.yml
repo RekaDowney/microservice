@@ -1,0 +1,32 @@
+server:
+  port: 7564
+
+spring:
+  application:
+    name: ZuulGateway
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://eureka7001:7001/eureka/,http://eureka7002:7002/eureka/,http://eureka7003:7003/eureka/
+  instance:
+    instance-id: zuul
+    prefer-ip-address: true
+    ip-address: 127.0.0.1
+
+zuul:
+  routes:
+    # 将 /provider/** 的所有访问都路由到 eureka 服务 microservice-provider8001 上
+    provider.serviceId: microservice-provider8001
+    provider.path: /provider/**
+
+  # 禁止直接通过 ${zuulHost}:${zuulPort}/microservice-provider8001 访问 microservice-provider8001 服务
+  # 如果服务有很多，可以直接使用 "*" 表示禁止所有路由代理
+#  ignored-services: microservice-provider8001
+  ignored-services: "*"
+  # 指定所有通过 zuul 路由的资源的访问前缀
+  prefix: /ms
+
+
