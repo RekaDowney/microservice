@@ -1,0 +1,15 @@
+server:
+  port: 4343
+
+spring:
+  application:
+    name: config-server
+  cloud:
+    config:
+      server:
+        git:
+          # git 远程仓库地址
+          uri: git@github.com:RekaDowney/microservice-config.git
+          # 如果 git 远程仓库是私有的，那么可以指定访问 Git 的授权账户和授权密码
+          # username: Git 账户
+          # password: Git 密码

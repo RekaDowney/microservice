@@ -1086,7 +1086,262 @@
 
 ## Zuul
 
+　　Zuul 提供路由和过滤功能。
 
+### Zuul 路由功能
+
+　　一、pom 文件（zuul模块）
+
+```xml
+
+        <dependencies>
+            <!-- Spring Cloud Zuul 服务网关依赖 -->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-starter-netflix-zuul</artifactId>
+                <version>${springcloud.zuul.version}</version>
+            </dependency>
+            <!-- Spring Cloud Zuul 服务网关依赖 -->
+    
+            <!-- eureka 客户端依赖（这里使用 Eureka 的服务发现功能） -->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-starter-config</artifactId>
+                <version>${springcloud.config.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+                <version>${springcloud.eureka.version}</version>
+            </dependency>
+            <!-- eureka 客户端依赖（这里使用 Eureka 的服务发现功能） -->
+    
+        </dependencies>
+
+
+```
+
+　　说明：Zuul 需要注册到 Eureka 注册中心，同时从 Eureka 注册中心获取服务注册信息。因此需要添加 eureka-client 相关依赖。
+
+　　二、启动类
+
+```java
+
+    @EnableZuulProxy
+    @SpringBootApplication
+    public class ZuulGatewayApplication {
+    
+        public static void main(String[] args) throws Exception {
+            SpringApplication.run(ZuulGatewayApplication.class, args);
+        }
+    
+    }
+
+```
+
+　　直接在启动类上添加 @EnableZuulProxy 注解即可开启 Zuul 路由自动配置。
+
+　　三、配置文件
+
+```yaml
+
+    server:
+      port: 7564
+    
+    spring:
+      application:
+        name: ZuulGateway
+    
+    eureka:
+      client:
+        register-with-eureka: true
+        fetch-registry: true
+        service-url:
+          defaultZone: http://eureka7001:7001/eureka/,http://eureka7002:7002/eureka/,http://eureka7003:7003/eureka/
+      instance:
+        instance-id: zuul
+        prefer-ip-address: true
+        ip-address: 127.0.0.1
+    
+    zuul:
+      routes:
+        # 将 /provider/** 的所有访问都路由到 eureka 服务 microservice-provider8001 上
+        provider.serviceId: microservice-provider8001
+        provider.path: /provider/**
+    
+      # 禁止直接通过 ${zuulHost}:${zuulPort}/microservice-provider8001 访问 microservice-provider8001 服务
+      # 如果服务有很多，可以直接使用 "*" 表示禁止所有路由代理
+    #  ignored-services: microservice-provider8001
+      ignored-services: "*"
+      # 指定所有通过 zuul 路由的资源的访问前缀
+      prefix: /ms
+
+```
+
+　　zuul.routes 是一个 Map<String, ZuulRoute> 结构，是 Zuul 的路由映射规则集。通过 XXX.serviceId 可以指定要路由代理的服务名称，然后通过 XXX.path 指定路由路径。意思就是：将所有对 XXX 服务的访问都代理到 path 指定的路径下。
+此时所有访问 ${zuul.host}/${zuul.port}/${xxx.path} 的请求都将被代理到 ${xxx.serviceId} 服务上，此时我们支持以下访问规则。
+- ${zuul.host}/${zuul.port}/${xxx.serviceId}/...
+- ${zuul.host}/${zuul.port}/${xxx.path}/...
+
+　　此时以上的访问都是对微服务 ${xxx.serviceId} 的访问代理。
+
+　　zuul.ignored-services 是一个 Set<String> 结构，该结构用来存储不需要直接路由代理的微服务的名称（serviceId），开启该配置后 ${zuul.host}/${zuul.port}/${xxx.serviceId}/... 这种路径将无法访问 ${xxx.serviceId} 服务。可以使用 "*" 表示禁止所有在 Eureka 中发现的微服务的直接代理访问。
+
+　　zuul.prefix 指定所有对 Zuul 代理的 URL_PATH 访问前缀。
+
+## ConfigServer
+
+　　Spring Cloud 提供 Config Server 作为配置中心。
+
+### 配置文件仓库（GitHub）
+
+　　在 GitHub 新建一个项目用来存储配置文件。这里我们将仓库命名为 microservice-config。然后将仓库（仓库地址：git@github.com:RekaDowney/microservice-config.git）克隆到本地。 
+　　编写统筹配置文件 application.yml
+
+```yaml
+
+    # 激活 dev 开发环境
+    spring:
+      profiles:
+        active: dev
+    
+    ---
+    
+    # dev 开发环境配置
+    spring:
+        profiles: dev
+        application:
+            name: microservice-config-dev
+    
+    ---
+    
+    # test 测试环境配置
+    spring:
+      profiles: test
+      application:
+        name: microservice-config-test
+
+```
+
+　　将该文件推送到远程仓库。
+
+### config-server 模块
+
+　　一、pom.xml 文件
+
+```xml
+
+        <dependencies>
+            <!-- 配置中心依赖 -->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-config-server</artifactId>
+                <version>${springcloud.config.server.version}</version>
+            </dependency>
+            <!-- 配置中心依赖 -->
+        </dependencies>
+
+```
+
+　　二、application.yml 配置文件
+
+```yaml
+
+    server:
+      port: 4343
+    
+    spring:
+      application:
+        name: config-server
+      cloud:
+        config:
+          server:
+            git:
+              # git 远程仓库地址
+              uri: git@github.com:RekaDowney/microservice-config.git
+              # 如果 git 远程仓库是私有的，那么可以指定访问 Git 的授权账户和授权密码
+              # username: Git 账户
+              # password: Git 密码
+
+```
+
+　　三、启动类
+
+```java
+
+    @EnableConfigServer // 启动 SpringCloud ConfigServer 自动配置
+    @SpringBootApplication
+    public class ConfigServerApplication {
+    
+        public static void main(String[] args) throws Exception {
+            SpringApplication.run(ConfigServerApplication.class, args);
+        }
+    
+    }
+
+```
+
+　　四、测试
+
+　　Config Server 的访问规则包括以下6种：
+- /application/${profile} 从 Git 远程仓库的 master 分支获取指定环境的配置，返回JSON格式
+- /application/${profile}/${label} 从 Git 远程仓库的指定分支（label 表示分支名称）获取指定环境的配置，返回JSON格式
+- /application-${profile}.yml 从 Git 远程仓库的 master 分支获取指定环境的配置，返回YAML格式
+- /${label}/application-${profile}.yml 从 Git 远程仓库的指定分支（label 表示分支名称）获取指定环境的配置，返回YAML格式
+- /application-${profile}.properties 从 Git 远程仓库的 master 分支获取指定环境的配置，返回非标准properties格式
+- /${label}/application-${profile}.properties 从 Git 远程仓库的指定分支（label 表示分支名称）获取指定环境的配置，返回非标准properties格式
+
+　　启动 ConfigServerApplication 后，访问 http://localhost:4343/master/application/dev，返回
+
+```json
+
+    {
+        "name": "application",
+        "profiles": [
+            "dev"
+        ],
+        "label": "master",
+        "version": "36f891443d3a32b8dd2bc4d1fa59ebcb41b5b47f",
+        "state": null,
+        "propertySources": [
+            {
+                "name": "git@github.com:RekaDowney/microservice-config.git/application.yml (document #1)",
+                "source": {
+                    "spring.profiles": "dev",
+                    "spring.application.name": "microservice-config-dev"
+                }
+            },
+            {
+                "name": "git@github.com:RekaDowney/microservice-config.git/application.yml (document #0)",
+                "source": {
+                    "spring.profiles.active": "dev"
+                }
+            }
+        ]
+    }
+
+```
+
+　　访问 http://localhost:4343/application-dev.yml，返回
+
+```yaml
+
+    spring:
+      application:
+        name: microservice-config-dev
+      profiles:
+        active: dev
+
+```
+
+　　访问 http://localhost:4343/master/application-dev.properties，返回
+
+```properties
+
+    spring.application.name: microservice-config-dev
+    spring.profiles.active: dev
+
+```
 
 ## 超链管理区
 
