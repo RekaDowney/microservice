@@ -1343,6 +1343,173 @@
 
 ```
 
+## ConfigClient
+
+　　有了 Config Server 作为配置中心，我们可以将其他微服务的配置都统一放到 Config Server 中作集中管理。然后让每个微服务模块从 Config Server 加载各自的配置文件。
+
+### Config Server 配置文件仓库（GitHub）
+
+　　往 microservice-config 远程仓库中添加新的配置文件 config-client.yml，内容如下：
+
+```yaml
+
+    spring:
+      profiles:
+        active:
+        - dev
+
+    ---
+    
+    server: 
+      port: 8000 
+    spring:
+      profiles: dev
+      application: 
+        name: config-client-dev
+    
+    ---
+    
+    server: 
+      port: 9000 
+    spring:
+      profiles: test
+      application: 
+        name: config-client-test
+
+```
+
+　　这里指定默认激活 dev 环境配置，dev 环境配置为 spring.application.name=config-client-dev，server.port=8000。test 环境配置为 spring.application.name=config-client-test，server.port=9000
+
+### config-client 模块
+
+　　一、 pom.xml 文件
+
+```xml
+
+        <dependencies>
+            <!-- spring-cloud-starter-config 包含了 spring-cloud-config-client 依赖 -->
+            <!-- 同时还有其他 SpringBoot 运行必须依赖 -->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-starter-config</artifactId>
+                <version>${springcloud.config.version}</version>
+            </dependency>
+    
+            <!-- 添加 web 环境依赖（主要是嵌入式 tomcat），避免程序一启动就直接停止 -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-web</artifactId>
+            </dependency>
+            <!--
+                    <dependency>
+                        <groupId>org.springframework.cloud</groupId>
+                        <artifactId>spring-cloud-config-client</artifactId>
+                        <version>${springcloud.config.client.version}</version>
+                    </dependency>
+            -->
+        </dependencies>
+
+```
+
+　　二、 bootstrap 和 application 配置文件
+
+　　Spring Cloud 支持从 bootstrap 和 application 这两个约定的配置文件中加载配置，其中 bootstrap 优先 applicaton 加载，常用于某些特定的配置，然后可以在 application 中指定通用的配置。
+
+　　bootstrap.yml 配置文件
+
+```yaml
+
+    ## bootstrap.yml 配置文件优先级高于 application.yml，所以会先加载 bootstrap.yml，再加载 application.yml
+    ## 默认 config-client 会从 localhost:8888 路径下尝试访问 config-server。所以如果 config-server 不是默认的 8888 端口
+    ## 那么必须指定 uri 为特定端口
+    
+    ## 由于 bootstrap.yml 优先加载，因此会从 config-server 读取配置信息
+    ## 下面的配置表示从 http://config4343:4343 这个 config-server 加载 master 分支的 config-client.yml 配置文件的 test 环境配置
+    spring:
+      cloud:
+        config:
+          # 从 git 远程仓库上读取的配置文件，注意没有yml后缀名
+          name: config-client
+          # 本次加载的配置文件 spring profile 为 test
+          profile: test
+          # 本次加载 master 分支的配置文件
+          label: master
+          # 从 Config-Server 加载对应的配置
+          uri: http://config4343:4343
+
+```
+
+   application.yml 配置文件
+   
+```yaml
+
+    # spring.application.name 和 server.port 配置都不生效，这是因为 bootstrap.yml 指定了从 config-server 加载配置 config-client.yml 配置文件的 test 环境配置。
+    spring:
+      application:
+        name: config-client
+    # 此时 config-client.yml 配置了 server.port 为 9000，所以实际的 config-client 访问端口为 9000 而不是下面配置的 8000
+    server:
+      port: 8000
+
+
+```
+
+　　由于默认将 ConfigServer 的访问路径设置为 localhost:8888（参考：org.springframework.cloud.config.client.ConfigClientProperties.uri），因此如果 ConfigServer 不在同一台或者端口不是 8888，那么需要在 bootstrap 中通过 spring.cloud.config.uri 配置项指定 ConfigServer 的访问路径。
+
+　　三、启动类和测试类
+
+```java
+
+    @SpringBootApplication
+    public class ConfigClientApplication {
+    
+        public static void main(String[] args) throws Exception {
+            SpringApplication.run(ConfigClientApplication.class, args);
+        }
+    
+    }
+
+```
+
+```java
+
+    @RestController
+    @RequestMapping("/test")
+    public class TestController {
+    
+        @Value("${spring.application.name}")
+        private String applicationName;
+    
+        @Value("${server.port}")
+        private int port;
+    
+        @GetMapping({"", "/"})
+        public Object getConfig() {
+            Map<String, Object> result = new HashMap<>();
+            result.put("applicationName", applicationName);
+            result.put("port", port);
+            return result;
+        }
+    
+    }
+
+
+```
+
+　　不需要额外的其他注解，直接启动 ConfigClientApplication 后，访问 localhost:9000/test（这里之所以不是 8000 是因为 bootstrap 加载了 Git 远程仓库中的配置，发现 server.port 为 9000），返回如下内容
+
+```json
+
+    {
+        "port": 9000,
+        "applicationName": "config-client-test"
+    }
+
+```
+
+　　可以看到 ConfigClient 成功从 ConfigServer 中获取并加载了 config-client.yml 文件中的 test 环境配置。所以 server.port 为 9000 并且 spring.application.name 为 config-client-test。
+
+
 ## 超链管理区
 
 [EurekaServerPage]: file:///C:/Users/Reka/Desktop/Markdown专辑/SpringCloud/Eureka/Eureka服务端管理页面.jpg "Eureka服务端"

@@ -1,0 +1,7 @@
+# spring.application.name 和 server.port 配置都不生效，这是因为 bootstrap.yml 指定了从 config-server 加载配置 config-client.yml 配置文件的 test 环境配置。
+spring:
+  application:
+    name: config-client
+# 此时 config-client.yml 配置了 server.port 为 9000，所以实际的 config-client 访问端口为 9000 而不是下面配置的 8000
+server:
+  port: 8000

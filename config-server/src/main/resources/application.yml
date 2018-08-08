@@ -9,6 +9,9 @@ spring:
       server:
         git:
           # git 远程仓库地址
+          # 必须保证有足够权限访问该仓库
+          # 如果没有添加 SSH KEY 到该 git 远程仓库，那么建议使用 https 协议的 Git 仓库地址
+          # https://github.com/RekaDowney/microservice-config.git
           uri: git@github.com:RekaDowney/microservice-config.git
           # 如果 git 远程仓库是私有的，那么可以指定访问 Git 的授权账户和授权密码
           # username: Git 账户

@@ -1,0 +1,17 @@
+## bootstrap.yml 配置文件优先级高于 application.yml，所以会先加载 bootstrap.yml，再加载 application.yml
+## 默认 config-client 会从 localhost:8888 路径下尝试访问 config-server。所以如果 config-server 不是默认的 8888 端口
+## 那么必须指定 uri 为特定端口
+
+## 由于 bootstrap.yml 优先加载，因此会从 config-server 读取配置信息
+## 下面的配置表示从 http://config4343:4343 这个 config-server 加载 master 分支的 config-client.yml 配置文件的 test 环境配置
+spring:
+  cloud:
+    config:
+      # 从 git 远程仓库上读取的配置文件，注意没有yml后缀名
+      name: config-client
+      # 本次加载的配置文件 spring profile 为 test
+      profile: test
+      # 本次加载 master 分支的配置文件
+      label: master
+      # 从 Config-Server 加载对应的配置
+      uri: http://config4343:4343
